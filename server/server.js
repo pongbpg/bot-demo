@@ -554,8 +554,8 @@ const txtListOrders = (orders) => {
             return `\n\nครั้งที่ #` + (i + 1) + ' ' + order.id +
                 order.product.map(product => {
                     return '\n' + product.code + ': ' + product.name + ' ' + product.amount + ' ชิ้น'.replace(/,/g, '')
-                }).replace(/,/g, '') + '\nยอดโอน' + order.bank
-                + '\n'
+                }) + '\nยอดโอน' + order.bank
+                + '\n'.replace(/,/g, '')
         }) +
         `\n\n(โปรดอ่านทุกบรรทัด เพื่อผลประโยชน์ตัวท่านเอง)` +
         `\n1.กรุณาตรวจสอบรายการสั่งซื้อด้วยนะคะ ถ้าไม่ถูกต้องแจ้งแอดมินให้แก้ไขทันที หากจัดส่งแล้วจะไม่สามารถแก้ไขได้ค่ะ` +
