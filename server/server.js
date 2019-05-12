@@ -42,8 +42,6 @@ app.post('/api/linebot', jsonParser, (req, res) => {
         replyToken: request.replyToken,
         messages: []
     };
-    // if (request.message.type !== 'text' || request.source.type !== 'group') {
-    //}
     if (msg.indexOf('@@admin:') > -1 && msg.split(':').length == 2) {
         adminRef.set({
             userId,
