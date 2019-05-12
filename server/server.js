@@ -124,6 +124,14 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                                                                 .set({ amount: balance }, { merge: true })
                                                         })
                                                 }
+                                                await db.collection('payments')
+                                                    .where('orderId', '==', orderId)
+                                                    .get()
+                                                    .then(snapShot => {
+                                                        snapShot.forEach(pay => {
+                                                            pay.ref.delete();
+                                                        })
+                                                    })
                                                 await orderRef.delete()
                                                     .then(cancel => {
                                                         obj.messages.push({
@@ -222,36 +230,33 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                                                                     type: 'text',
                                                                     text: `@@ยกเลิก:${orderId}`
                                                                 })
-                                                                const bankData = {
-                                                                    name: resultOrder.data.bank.match(/[a-zA-Z]+/g, '')[0],
-                                                                    date: resultOrder.data.bank.match(/\d{2}\/\d{2}\/\d{2}/g)[0],
-                                                                    time: resultOrder.data.bank.match(/\d{2}\.\d{2}/g)[0],
-                                                                    price: resultOrder.data.price
-                                                                }
-                                                                await db.collection('payments')
-                                                                    .where('name', '==', bankData.name)
-                                                                    .where('date', '==', bankData.date)
-                                                                    .where('time', '==', bankData.time)
-                                                                    .where('price', '==', bankData.price)
-                                                                    .get()
-                                                                    .then(snapShot => {
-                                                                        snapShot.forEach(doc => {
-                                                                            obj.messages.push({
-                                                                                type: 'text',
-                                                                                text: `⚠กรุณาตรวจสอบรายการโอนนี้มีซ้ำ⚠
+                                                                for (var b = 0; b < resultOrder.data.banks.length; b++) {
+                                                                    if (['COD', 'RS'].indexOf(resultOrder.data.banks[b].name) == -1) {
+                                                                        await db.collection('payments')
+                                                                            .where('name', '==', resultOrder.data.banks[b].name)
+                                                                            .where('date', '==', resultOrder.data.banks[b].date)
+                                                                            .where('time', '==', resultOrder.data.banks[b].time)
+                                                                            .where('price', '==', resultOrder.data.banks[b].price)
+                                                                            .get()
+                                                                            .then(snapShot => {
+                                                                                snapShot.forEach(doc => {
+                                                                                    obj.messages.push({
+                                                                                        type: 'text',
+                                                                                        text: `⚠กรุณาตรวจสอบรายการโอนนี้มีซ้ำ⚠
 รหัสสั่งซื้อ:${doc.data().orderId} แอดมิน:${doc.data().admin}
 FBลูกค้า:${doc.data().fb}
 รายการที่ซ้ำ: ${doc.data().name} ${moment(doc.data().date, 'YYYYMMDD').format('DD/MM/YY')} ${doc.data().time} จำนวน ${formatMoney(doc.data().price, 0)} บาท`
+                                                                                    })
+                                                                                })
+                                                                                db.collection('payments').add({
+                                                                                    orderId,
+                                                                                    ...bankData,
+                                                                                    admin: user.data().name,
+                                                                                    fb: resultOrder.data.fb
+                                                                                })
                                                                             })
-                                                                        })
-                                                                        db.collection('payments').add({
-                                                                            orderId,
-                                                                            ...bankData,
-                                                                            admin: user.data().name,
-                                                                            fb: resultOrder.data.fb
-                                                                        })
-                                                                    })
-
+                                                                    }
+                                                                }
                                                                 await reply(obj);
                                                             }
                                                             callback();
@@ -330,14 +335,14 @@ const initMsgOrder = (txt) => {
     let data = Object.assign(...txt.split('#').filter(f => f != "")
         .map(m => {
             if (m.split(':').length == 2) {
-                const dontReplces = ["name", "fb", "bank", "addr"];
+                const dontReplces = ["name", "fb", "addr"];
                 let key = m.split(':')[0].toLowerCase();
                 switch (key) {
                     case 'n': key = 'name'; break;
                     case 't': key = 'tel'; break;
                     case 'a': key = 'addr'; break;
                     case 'o': key = 'product'; break;
-                    case 'b': key = 'bank'; break;
+                    case 'b': key = 'banks'; break;
                     case 'p': key = 'price'; break;
                     case 'f': key = 'fb'; break;
                     // case 'l': key = 'fb'; break;
@@ -359,70 +364,111 @@ const initMsgOrder = (txt) => {
                         }
                     }
                 }
-                if (key !== 'price') {
-                    value = value.trim();
-                    if (key == 'product') {
-                        const str = value;
-                        // let orders = [];
-                        let arr = str.split(',');
-                        for (var a in arr) {
-                            if (arr[a].split('=').length == 2) {
-                                const code = arr[a].split('=')[0].toUpperCase();
-                                const amount = Number(arr[a].split('=')[1].replace(/\D/g, ''));
-                                const orderIndex = orders.findIndex(f => f.code == code);
-                                if (orderIndex > -1 && amount > 0) {
-                                    orders[orderIndex]['amount'] = orders[orderIndex]['amount'] + amount
-                                } else {
-                                    orders.push({
-                                        code,
-                                        amount,
-                                        name: ''
-                                    })
-                                }
+                // if (key !== 'price') {
+                value = value.trim();
+                if (key == 'product') {
+                    const str = value;
+                    // let orders = [];
+                    let arr = str.split(',');
+                    for (var a in arr) {
+                        if (arr[a].split('=').length == 2) {
+                            const code = arr[a].split('=')[0].toUpperCase();
+                            const amount = Number(arr[a].split('=')[1].replace(/\D/g, ''));
+                            const orderIndex = orders.findIndex(f => f.code == code);
+                            if (orderIndex > -1 && amount > 0) {
+                                orders[orderIndex]['amount'] = orders[orderIndex]['amount'] + amount
                             } else {
-                                const orderIndex = orders.findIndex(f => f.code == 'สินค้า');
-                                if (orderIndex > -1) {
+                                orders.push({
+                                    code,
+                                    amount,
+                                    name: ''
+                                })
+                            }
+                        } else {
+                            const orderIndex = orders.findIndex(f => f.code == 'สินค้า');
+                            if (orderIndex > -1) {
 
-                                } else {
-                                    orders.push({
-                                        code: `${emoji(0x1000A6)}รหัสสินค้าไม่ถูกต้อง`,
-                                        amount: 'undefined'
-                                    })
-                                }
+                            } else {
+                                orders.push({
+                                    code: `${emoji(0x1000A6)}รหัสสินค้าไม่ถูกต้อง`,
+                                    amount: 'undefined'
+                                })
                             }
                         }
-                        value = orders;
-                    } else if (key == 'name' || key == 'fb') {
-                        if (value.length < 2) {
-                            value = `${emoji(0x1000A6)}undefined`;
-                        }
-                    } else if (key == 'bank') {
-                        let time = '', name = '', date = '';
-                        if (value.match(/\d{2}\.\d{2}/g) == null) {
-                            value = `${emoji(0x1000A6)}เวลาโอนundefined`;
+                    }
+                    value = orders;
+                } else if (key == 'name' || key == 'fb') {
+                    if (value.length < 2) {
+                        value = `${emoji(0x1000A6)}undefined`;
+                    }
+                } else if (key == 'banks') {
+                    const str = value;
+                    let arr = str.split(',');
+                    let banks = [];
+                    for (var a in arr) {
+                        if (arr[a].split('=').length == 2) {
+                            const bank1 = arr[a].split('=')[0].toUpperCase();
+                            let price = Number(arr[a].split('=')[1].replace(/\D/g, ''));
+                            let name = '';
+                            let time = '00.00';
+                            let date = moment().format('YYYYMMDD');
+                            if (bank1.match(/[a-zA-Z]+/g, '') == null) {
+                                name = `${emoji(0x1000A6)}ธนาคารundefined`;
+                                // price = 'undefined';
+                            } else {
+                                name = bank1.match(/[a-zA-Z]+/g, '')[0];
+                            }
+                            if (bank1.match(/\d{6}/g) == null && ['COD', 'RS'].indexOf(bank1) == -1) {
+                                // name = bank1.match(/[a-zA-Z]+/g, '')[0];
+                                date = `${emoji(0x1000A6)}วันที่โอนundefined`;
+                                // price = 'undefined';
+                            } else {
+                                date = ['COD', 'RS'].indexOf(bank1) == -1 ?
+                                    moment(bank1.match(/\d{6}/g)[0], 'DDMMYY').isValid() ?
+                                        moment(bank1.match(/\d{6}/g)[0], 'DDMMYY').format('YYYYMMDD') : `${emoji(0x1000A6)}วันที่โอนundefined`
+                                    : date;
+                            }
+                            if (bank1.match(/\d{2}\.\d{2}/g) == null && ['COD', 'RS'].indexOf(bank1) == -1) {
+                                time = `${emoji(0x1000A6)}เวลาโอนundefined`;
+                            } else {
+                                time = ['COD', 'RS'].indexOf(bank1) == -1 ? bank1.match(/\d{2}\.\d{2}/g)[0] : time;
+                            }
+                            banks.push({
+                                name,
+                                date,
+                                time,
+                                price
+                            })
                         } else {
-                            time = value.match(/\d{2}\.\d{2}/g)[0];
-                        }
-                        if (value.match(/[a-zA-Z]+/g, '') == null) {
-                            value = `${emoji(0x1000A6)}ธนาคารundefined`;
-                        } else {
-                            name = value.match(/[a-zA-Z]+/g, '')[0];
-                        }
-                        if (value.match(/\d{6}/g) == null) {
-                            value = `${emoji(0x1000A6)}วันที่โอน(ววดดปป)undefined`;
-                        } else {
-                            date = value.match(/\d{6}/g)[0];
-                        }
-                        if (time != '' && name != '' && date != '') {
-                            value = name + ' ' + moment(date, 'DDMMYY').format('DD/MM/YY') + ' ' + time;
+                            banks.push({
+                                name: arr[a].toUpperCase(),
+                                time: '00.00',
+                                price: `${emoji(0x1000A6)}ยอดเงินundefined`
+                            })
                         }
                     }
-                } else {
-                    value = Number(value.replace(/\D/g, ''));
+                    value = banks
                 }
                 return { [key]: value };
             }
         }));
+    data.price = data.banks ? data.banks.map(b => b.price).reduce((le, ri) => Number(le) + Number(ri)) || 0 : 0
+    data.bank = data.banks ? data.banks.map(bank => {
+        let checkBank = true;
+        // if (bank.name.indexOf('COD') > -1) {
+        //     if (['F'].indexOf(data.name.substr(0, 1)) > -1) {
+        //         checkBank = true;
+        //     }
+        // } else {
+        //     if (['F'].indexOf(data.name.substr(0, 1)) > -1) {
+        //         checkBank = true;
+        //     }
+        // }
+        return checkBank && !isNaN(bank.price)
+            ? bank.name + (bank.time == '00.00' ? '' : ' ' + (bank.date.indexOf('undefined') > -1 ? bank.date : moment(bank.date, 'YYYYMMDD').format('DD/MM/YY'))) + (bank.time == '00.00' ? '' : ' ' + bank.time) + '=' + formatMoney(bank.price, 0)
+            : `${emoji(0x1000A6) + bank.name}undefined`
+
+    }).reduce((le, ri) => le + ',' + ri) : emoji(0x1000A6) + 'undefined';
     const refs = orders.map(order => db.collection('products').doc(order.code));
     return db.getAll(...refs)
         .then(snapShot => {
@@ -463,6 +509,7 @@ const initMsgOrder = (txt) => {
         })
 }
 const formatOrder = (data) => {
+    //ยอดชำระ: ${data.price ? formatMoney(data.price, 0) + ' บาท' : `${emoji(0x1000A6)}undefined`} 
     return `
 ชื่อ: ${data.name ? data.name : `${emoji(0x1000A6)}undefined`} 
 เบอร์โทร: ${data.tel ? data.tel : `${emoji(0x1000A6)}undefined`}  
@@ -471,21 +518,22 @@ const formatOrder = (data) => {
             ? data.product.map((p, i) => '\n' + p.code + ':' + p.name + ' ' + p.amount + (p.amount == 'undefined' ? '' : 'ชิ้น '))
             : `${emoji(0x1000A6)}undefined`} 
 ธนาคาร: ${data.bank} 
-ยอดชำระ: ${data.price ? formatMoney(data.price, 0) + ' บาท' : `${emoji(0x1000A6)}undefined`} 
+ยอดชำระ: ${formatMoney(data.price, 0)} 
 FB: ${data.fb ? data.fb : `${emoji(0x1000A6)}undefined`} `;
 }
 const txtListOrders = (orders) => {
+    // '\nยอดรวม: ' + formatMoney(orders.map(order => order.price).reduce((le, ri) => le + ri), 0) + ' บาท' +
     const len = orders.length - 1;
     return 'ลูกค้า: ' + orders[len].name +
         '\nเบอร์โทร: ' + orders[len].tel +
         '\nที่อยู่: ' + orders[len].addr +
         '\nFB: ' + orders[len].fb +
-        '\nยอดรวม: ' + formatMoney(orders.map(order => order.price).reduce((le, ri) => le + ri), 0) + ' บาท' +
+        '\nยอดรวม: ' + formatMoney(orders.price, 0) + ' บาท' +
         `\n===รายการสั่งซื้อ===` + orders.map((order, i) => {
             return `\n\nครั้งที่ #` + (i + 1) + ' ' + order.id +
                 order.product.map(product => {
                     return '\n' + product.code + ': ' + product.name + ' ' + product.amount + ' ชิ้น'.replace(/,/g, '')
-                }) + '\nยอดโอน' + order.bank + ' ' + formatMoney(order.price, 0) + ' บาท'.replace(/,/g, '')
+                }).replace(/,/g, '') + '\nยอดโอน' + order.bank
                 + '\n'
         }) +
         `\n\n(โปรดอ่านทุกบรรทัด เพื่อผลประโยชน์ตัวท่านเอง)` +
@@ -493,7 +541,7 @@ const txtListOrders = (orders) => {
         `\n2.แจ้งเลขพัสดุทางอินบล็อคเท่านั้น Kerry 1-3 วัน (แล้วแต่พื้นที่นั้นๆ) ค่ะ` +
         `\n3.อย่าลืมส่งรีวิวสวยๆกลับมา..ลุ้นทองทุกเดือน!!` +
         `\n4.หากลูกค้าเจอสินค้าตำหนิสามารถส่งกลับมาเปลี่ยนทางร้านได้ไม่เกิน 2-4 วัน ในสภาพเดิม ไม่ซัก ไม่แกะป้าย นะคะ!!...หากเกินระยะเวลาที่กำหนดทางร้านจะไม่รับเปลี่ยนทุกกรณีคะ` +
-        `\n5.เลขพัสดุตรวจสอบได้ที่ลิ้งนี้นะคะ https://bot-demo.herokuapp.com`
+        `\n5.เลขพัสดุตรวจสอบได้ที่ลิ้งนี้นะคะ https://bot-demo34.herokuapp.com`
 }
 const formatMoney = (amount, decimalCount = 2, decimal = ".", thousands = ",") => {
     try {
