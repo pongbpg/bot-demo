@@ -51,7 +51,7 @@ export class Header extends React.Component {
         <nav className="navbar is-dark">
           <div className="container">
             <div className="navbar-brand">
-              <Link className="navbar-item brand-text" to="/home">JAOYING SHOP</Link>
+              <Link className="navbar-item brand-text" to="/home">DEMO SHOP</Link>
               <div data-target="navMenu" onClick={this.toggleIsBurger}
                 className={this.state.isBurger === true ? "navbar-burger burger is-active" : "navbar-burger burger"}>
                 <span></span>
@@ -79,6 +79,18 @@ export class Header extends React.Component {
                     <a className="navbar-item" href="/live/show" target="_blank">
                       <span className="icon"><MdDesktopWindows /></span>แสดง
                   </a>
+                  </div>
+                </div>
+
+                <div className="navbar-item has-dropdown is-hoverable">
+                  <a className="navbar-link">จัดการ</a>
+                  <div className="navbar-dropdown">
+                    <Link className="navbar-item" to="/manage/admins">
+                      แอดมินไลน์
+                      </Link>
+                    <Link className="navbar-item" to="/manage/emails">
+                      ผู้ใช้งาน
+                      </Link>
                   </div>
                 </div>
                 {/* <Link className="navbar-item" to="/orders">

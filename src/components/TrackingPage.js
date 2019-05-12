@@ -71,7 +71,7 @@ export class TrackingPage extends React.Component {
         <nav className="navbar">
           <div className="container">
             <div className="navbar-brand">
-              <span className="navbar-item title">JAOYING SHOP</span>
+              <span className="navbar-item title">DEMO SHOP</span>
               <span data-target="navbarMenu" onClick={this.toggleIsBurger}
                 className={this.state.isBurger === true ? "navbar-burger burger is-active" : "navbar-burger burger"}>
                 <span></span>
@@ -96,7 +96,7 @@ export class TrackingPage extends React.Component {
                 <h1 className="title has-text-white">ค้นหาเลขพัสดุ</h1>
                 <div className="field is-grouped">
                   <p className="control has-icons-left is-expanded">
-                    <input className="input is-large" type="text" placeholder="เบอร์โทรศัพท์ 10 หลัก ถ้าเป็นเบอร์บ้านเติม 0 ข้างหน้าค่ะ"
+                    <input className="input is-large" type="text" placeholder="ค้นหาจากเบอร์โทรศัพท์ที่แจ้งแอดมิน"
                       value={this.state.search}
                       onChange={this.onSearchChange} />
                     <span className="icon is-small is-left">

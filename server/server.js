@@ -13,7 +13,7 @@ admin.initializeApp({
     // credential: admin.credential.cert(serviceAccount)
     credential: admin.credential.cert({
         "type": "service_account",
-        "project_id": "jaoyingdb",
+        "project_id": "demodb-26ade",
         "private_key_id": process.env.ADMIN_PRIVATE_KEY_ID,
         "private_key": process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n'),
         "client_email": process.env.CLIENT_EMAIL,
@@ -29,7 +29,7 @@ db.settings(settings);
 const LINE_MESSAGING_API = 'https://api.line.me/v2/bot/message';
 const LINE_HEADER = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer cjyJdBLbrT7DPv74Xlv9iK4XJgYX++Meh6Ghs5rYulUjNRMsP9rJIVx52ByKT/wD9uCT90kpokfgzEENrYentB2AZ9KjiGcRtDKaaEeafLY3kj5SnX/HpG3m+5ja80dthu5J6h5YIv+pCr7wNPNtiQdB04t89/1O/w1cDnyilFU=`
+    'Authorization': `Bearer hlF5sNoo0lO2bbTMn7uwbhXNz5KoNx7iUqVIDvUSFs5orA86LQCJ7OpLPJLV5Gt/xWryxeiVk5WAuqvwdwnYSVox4U59vs2wmhNKOnHxXrlLZhPTadvni08Mp3E8hMoZxh8HN8SwX190m2nPOkjUwQdB04t89/1O/w1cDnyilFU=`
 };
 var jsonParser = bodyParser.json();
 app.post('/api/linebot', jsonParser, (req, res) => {
@@ -355,6 +355,10 @@ const initMsgOrder = (txt) => {
                     value = value.replace(/\D/g, ''); //เหลือแต่ตัวเลข
                     if (value.length != 10) {
                         value = `${emoji(0x1000A6)}เบอร์โทรไม่ครบ 10 หลักundefined`
+                    } else {
+                        if (value.substr(0, 2) == '00') {
+                            value = value.substr(1, 10)
+                        }
                     }
                 }
                 if (key !== 'price') {
@@ -484,14 +488,14 @@ const txtListOrders = (orders) => {
                 order.product.map(product => {
                     return '\n' + product.code + ': ' + product.name + ' ' + product.amount + ' ชิ้น'.replace(/,/g, '')
                 }) + '\nยอดโอน' + order.bank + ' ' + formatMoney(order.price, 0) + ' บาท'.replace(/,/g, '')
-                + '\n---------------'
+                + '\n'
         }) +
         `\n\n(โปรดอ่านทุกบรรทัด เพื่อผลประโยชน์ตัวท่านเอง)` +
         `\n1.กรุณาตรวจสอบรายการสั่งซื้อด้วยนะคะ ถ้าไม่ถูกต้องแจ้งแอดมินให้แก้ไขทันที หากจัดส่งแล้วจะไม่สามารถแก้ไขได้ค่ะ` +
         `\n2.แจ้งเลขพัสดุทางอินบล็อคเท่านั้น Kerry 1-3 วัน (แล้วแต่พื้นที่นั้นๆ) ค่ะ` +
         `\n3.อย่าลืมส่งรีวิวสวยๆกลับมา..ลุ้นทองทุกเดือน!!` +
         `\n4.หากลูกค้าเจอสินค้าตำหนิสามารถส่งกลับมาเปลี่ยนทางร้านได้ไม่เกิน 2-4 วัน ในสภาพเดิม ไม่ซัก ไม่แกะป้าย นะคะ!!...หากเกินระยะเวลาที่กำหนดทางร้านจะไม่รับเปลี่ยนทุกกรณีคะ` +
-        `\n5.เลขพัสดุตรวจสอบได้ที่ลิ้งนี้นะคะ https://bot-jaoying.herokuapp.com`
+        `\n5.เลขพัสดุตรวจสอบได้ที่ลิ้งนี้นะคะ https://bot-demo.herokuapp.com`
 }
 const formatMoney = (amount, decimalCount = 2, decimal = ".", thousands = ",") => {
     try {

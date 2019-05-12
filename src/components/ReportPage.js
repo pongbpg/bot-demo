@@ -100,64 +100,20 @@ export class ReportPage extends React.Component {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td className="has-text-centered">1</td>
-                                    <td className="has-text-centered">รายชื่อแพ็คของ (วันที่เริ่ม)</td>
-                                    <td className="has-text-centered">
-                                        <div className="field is-grouped is-grouped-centered">
-                                            <p className="control">
-                                                <a className="button is-danger is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/delivery?startDate=${moment(this.state.startDate).format('YYYYMMDD')}&file=pdf`}
-                                                    target="_blank">
-                                                    PDF
-                                        </a>
-                                            </p>
-                                            <p className="control">
-                                                <a className="button is-success is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/delivery?startDate=${moment(this.state.startDate).format('YYYYMMDD')}&file=excel`}
-                                                    target="_blank">
-                                                    EXCEL
-                                        </a>
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td className="has-text-centered">2</td>
-                                    <td className="has-text-centered">ลำดับซอง (วันที่เริ่ม)</td>
-                                    <td className="has-text-centered">
-                                        <div className="field is-grouped is-grouped-centered">
-                                            <p className="control">
-                                                <a className="button is-danger is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/delivery?startDate=${moment(this.state.startDate).format('YYYYMMDD')}&file=pdf&detail=show`}
-                                                    target="_blank">
-                                                    PDF
-                                        </a>
-                                            </p>
-                                            <p className="control">
-                                                <a className="button is-success is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/delivery?startDate=${moment(this.state.startDate).format('YYYYMMDD')}&file=excel&detail=show`}
-                                                    target="_blank">
-                                                    EXCEL
-                                        </a>
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
                                 < tr >
-                                    <td className="has-text-centered">3</td>
+                                    <td className="has-text-centered">1</td>
                                     <td className="has-text-centered">STATEMENTการโอนแต่ละธนาคาร (วันที่เริ่ม-ถึงวันที่)</td>
                                     <td className="has-text-centered">
                                         <div className="field is-grouped is-grouped-centered">
                                             <p className="control">
                                                 <a className="button is-danger is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/dailyStatement?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=pdf`}
+                                                    href={`http://yaumjai.com:3000/api/demo/dailyStatement?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=pdf`}
                                                     target="_blank">
                                                     PDF</a>
                                             </p>
                                             <p className="control">
                                                 <a className="button is-success is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/dailyStatement?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=excel`}
+                                                    href={`http://yaumjai.com:3000/api/demo/dailyStatement?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=excel`}
                                                     target="_blank">
                                                     EXCEL</a>
                                             </p>
@@ -165,39 +121,19 @@ export class ReportPage extends React.Component {
                                     </td>
                                 </tr>
                                 < tr >
-                                    <td className="has-text-centered">4</td>
-                                    <td className="has-text-centered">STATEMENT กวง (วันที่เริ่ม-ถึงวันที่)</td>
-                                    <td className="has-text-centered">
-                                        <div className="field is-grouped is-grouped-centered">
-                                            <p className="control">
-                                                <a className="button is-danger is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/dailyStatement?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=pdf&order=id`}
-                                                    target="_blank">
-                                                    PDF</a>
-                                            </p>
-                                            <p className="control">
-                                                <a className="button is-success is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/dailyStatement?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=excel&order=id`}
-                                                    target="_blank">
-                                                    EXCEL</a>
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                < tr >
-                                    <td className="has-text-centered">5</td>
+                                    <td className="has-text-centered">2</td>
                                     <td className="has-text-centered">ยอดโอนรวมแต่ละธนาคาร (วันที่เริ่ม-ถึงวันที่)</td>
                                     <td className="has-text-centered">
                                         <div className="field is-grouped is-grouped-centered">
                                             <p className="control">
                                                 <a className="button is-danger is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/dailyBank?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=pdf&sum=all`}
+                                                    href={`http://yaumjai.com:3000/api/demo/dailyBank?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=pdf&sum=all`}
                                                     target="_blank">
                                                     PDF</a>
                                             </p>
                                             <p className="control">
                                                 <a className="button is-success is-centered is-small"
-                                                    href={`http://yaumjai.com:3000/api/jaoying/dailyBank?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=excel&sum=all`}
+                                                    href={`http://yaumjai.com:3000/api/demo/dailyBank?uid=${this.state.uid}&startDate=${moment(this.state.startDate).format('YYYY-MM-DD')}&endDate=${moment(this.state.endDate).format('YYYY-MM-DD')}&file=excel&sum=all`}
                                                     target="_blank">
                                                     EXCEL</a>
                                             </p>

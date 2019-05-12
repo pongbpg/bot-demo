@@ -66,7 +66,7 @@ export class LoginPage extends React.Component {
                 <div className="hero-body">
                     <div className="container has-text-centered">
                         <div className="column is-6 is-offset-3">
-                            <h3 className="title has-text-white">JAOYING OFFICE</h3>
+                            <h3 className="title has-text-white">DEMO OFFICE</h3>
                             <p className="subtitle has-text-white">สำหรับเจ้าหน้าที่</p>
                             <div className="box">
                                 <div className="field">

@@ -9,6 +9,8 @@ import pagesReducer from '../reducers/pages';
 import sayhisReducer from '../reducers/sayhis';
 import costsReducer from '../reducers/costs';
 import liveReducer from '../reducers/live';
+import manageReducer from '../reducers/manage';
+
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 export default () => {
@@ -22,8 +24,8 @@ export default () => {
       pages: pagesReducer,
       sayhis: sayhisReducer,
       costs: costsReducer,
-      live: liveReducer,
-
+      live: liveReducer,      
+      manage: manageReducer
     }),
     composeEnhancers(applyMiddleware(thunk))
     // window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
