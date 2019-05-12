@@ -543,13 +543,13 @@ const formatOrder = (data) => {
 FB: ${data.fb ? data.fb : `${emoji(0x1000A6)}undefined`} `;
 }
 const txtListOrders = (orders) => {
-    // '\nยอดรวม: ' + formatMoney(orders.map(order => order.price).reduce((le, ri) => le + ri), 0) + ' บาท' +
+
     const len = orders.length - 1;
     return 'ลูกค้า: ' + orders[len].name +
         '\nเบอร์โทร: ' + orders[len].tel +
         '\nที่อยู่: ' + orders[len].addr +
         '\nFB: ' + orders[len].fb +
-        '\nยอดรวม: ' + formatMoney(orders.price, 0) + ' บาท' +
+        '\nยอดรวม: ' + formatMoney(orders.map(order => order.price).reduce((le, ri) => le + ri), 0) + ' บาท' +
         `\n===รายการสั่งซื้อ===` + orders.map((order, i) => {
             return `\n\nครั้งที่ #` + (i + 1) + ' ' + order.id +
                 order.product.map(product => {
