@@ -12,7 +12,7 @@ export class HomePage extends React.Component {
     return (
       <div className="hero-body">
         <div className="columns">
-          <div className="column is-10 is-offset-1">
+          <div className="column is-12">
             <AddProduct />
             <StockWidget />
           </div>

@@ -156,7 +156,7 @@ export class StockPage extends React.Component {
                             <tr>
                                 {/* <th className="has-text-centered">ลำดับ</th> */}
                                 <th className="has-text-left">รหัส</th>
-                                <th className="has-text-left">ชื่อสินค้า</th>
+                                <th className="has-text-left" width="30%">ชื่อสินค้า</th>
                                 <th className="has-text-left">ขนาด</th>
                                 <th className="has-text-right">COST</th>
                                 <th className="has-text-right">ราคา</th>
