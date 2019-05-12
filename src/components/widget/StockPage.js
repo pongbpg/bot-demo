@@ -175,7 +175,7 @@ export class StockPage extends React.Component {
                                         <td className="has-text-left">{st.id}</td>
                                         <td className="has-text-left">{st.name}</td>
                                         <td className="has-text-centered">{st.size}</td>
-                                        <td className="has-text-right">JY{Money(st.cost, 0)}</td>
+                                        <td className="has-text-right">{Money(st.cost, 0)}</td>
                                         <td className="has-text-right">{Money(st.price, 0)}</td>
                                         <td className="has-text-right">{Money(st.amount, 0)}</td>
                                         <td className="has-text-right">
@@ -316,7 +316,7 @@ export class StockPage extends React.Component {
                             }
                             <tr>
                                 <td className="has-text-centered" colSpan={3}>รวม</td>
-                                <td className="has-text-right">JY{Money(sumCost, 0)}</td>
+                                <td className="has-text-right">{Money(sumCost, 0)}</td>
                                 <td></td>
                                 <td className="has-text-right">{Money(sumAmount, 0)}</td>
                                 <td></td>
