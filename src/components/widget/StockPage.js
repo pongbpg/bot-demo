@@ -158,7 +158,7 @@ export class StockPage extends React.Component {
                                 <th className="has-text-left">รหัส</th>
                                 <th className="has-text-left" width="30%">ชื่อสินค้า</th>
                                 <th className="has-text-left">ขนาด</th>
-                                <th className="has-text-right">COST</th>
+                                {this.state.auth.role == 'owner' && (<th className="has-text-right">COST</th>)}
                                 <th className="has-text-right">ราคา</th>
                                 <th className="has-text-right">คงเหลือ</th>
                                 {this.state.auth.role == 'owner' && (< th className="has-text-right">จัดการ</th>)}
@@ -175,10 +175,10 @@ export class StockPage extends React.Component {
                                         <td className="has-text-left">{st.id}</td>
                                         <td className="has-text-left">{st.name}</td>
                                         <td className="has-text-centered">{st.size}</td>
-                                        <td className="has-text-right">{Money(st.cost, 0)}</td>
+                                        {this.state.auth.role == 'owner' && (<td className="has-text-right">{Money(st.cost, 0)}</td>)}
                                         <td className="has-text-right">{Money(st.price, 0)}</td>
                                         <td className="has-text-right">{Money(st.amount, 0)}</td>
-                                        <td className="has-text-right">
+                                        {this.state.auth.role == 'owner' && (<td className="has-text-right">
                                             <a className="button is-outlined"
                                                 onClick={() => { this.onActionClick(true, st.id) }}>
                                                 <span>แก้ไข</span>
@@ -186,7 +186,7 @@ export class StockPage extends React.Component {
                                                     <MdEdit />
                                                 </span>
                                             </a>
-                                        </td>
+                                        </td>)}
                                     </tr>;
                                 } else {
                                     return <tr key={st.id}>
@@ -317,9 +317,9 @@ export class StockPage extends React.Component {
                             <tr>
                                 <td className="has-text-centered" colSpan={3}>รวม</td>
                                 <td className="has-text-right">{Money(sumCost, 0)}</td>
-                                <td></td>
+                                {this.state.auth.role == 'owner' && (<td></td>)}
                                 <td className="has-text-right">{Money(sumAmount, 0)}</td>
-                                <td></td>
+                                {this.state.auth.role == 'owner' && (<td></td>)}
                             </tr>
                         </tbody>
                     </table>

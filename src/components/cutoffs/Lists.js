@@ -8,6 +8,7 @@ export class CutOff extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            auth: props.auth,
             cutoffs: props.cutoffs,
             cutoffDate: '',
             tracks: []
@@ -76,7 +77,7 @@ export class CutOff extends React.Component {
                         <th className="has-text-centered">ลำดับ</th>
                         <th className="has-text-left">รอบ</th>
                         <th className="has-text-centered">สถานะ</th>
-                        <th className="has-text-centered">ยอดขาย</th>
+                        {this.state.auth.role == 'owner' && (<th className="has-text-centered">ยอดขาย</th>)}
                         {/* <th className="has-text-centered">จ่าหน้าซอง</th> */}
                         <th className="has-text-centered">แพ็คของ</th>
                         <th className="has-text-centered">เลขพัสดุ</th>
@@ -89,13 +90,13 @@ export class CutOff extends React.Component {
                             <td className="has-text-centered">{++i}</td>
                             <td className="has-text-left">{moment(ct.id).format('ll')}</td>
                             <td className="has-text-centered">{ct.cutoff ? 'ปิดรอบแล้ว' : 'ยังไม่ปิดรอบ'}</td>
-                            <td className="has-text-centered">
+                            {this.state.auth.role == 'owner' && (<td className="has-text-centered">
                                 <a className="button is-primary is-centered is-small"
                                     href={`http://yaumjai.com:3000/api/demo/cutoffSale?cutoffDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
                                     target="_blank">
                                     PDF
                                 </a>
-                            </td>
+                            </td>)}
                             {/* <td className="has-text-centered">
                                 <a className="button is-primary is-centered is-small"
                                     href={`http://yaumjai.com:3000/api/demo/delivery?startDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
@@ -138,6 +139,7 @@ export class CutOff extends React.Component {
 }
 const mapStateToProps = (state, props) => ({
     // cutoffs: state.cutoffs
+    auth: state.auth
 });
 const mapDispatchToProps = (dispatch, props) => ({
     startUploadTracks: (cutoffDate, tracks) => dispatch(startUploadTracks(cutoffDate, tracks)),

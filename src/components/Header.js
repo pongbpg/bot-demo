@@ -82,23 +82,23 @@ export class Header extends React.Component {
                   </div>
                 </div>
 
-                <div className="navbar-item has-dropdown is-hoverable">
-                  <a className="navbar-link">จัดการ</a>
-                  <div className="navbar-dropdown">
-                    <Link className="navbar-item" to="/manage/admins">
-                      แอดมินไลน์
-                      </Link>
-                    <Link className="navbar-item" to="/manage/emails">
-                      ผู้ใช้งาน
-                      </Link>
+                {this.state.auth.role == 'owner' && (
+                  <div className="navbar-item has-dropdown is-hoverable">
+                    <a className="navbar-link">จัดการ</a>
+                    <div className="navbar-dropdown">
+                      <Link className="navbar-item" to="/manage/admins">
+                        แอดมินไลน์
+                     </Link>
+                      <Link className="navbar-item" to="/manage/emails">
+                        ผู้ใช้งาน
+                     </Link>
+                    </div>
                   </div>
-                </div>
-                {/* <Link className="navbar-item" to="/orders">
-                  <span className="icon"><MdMailOutline /></span>เลขพัสดุ
-                  </Link> */}
-                <Link className="navbar-item" to="/report">
+                )}
+                {this.state.auth.role == 'owner' && (<Link className="navbar-item" to="/report">
                   <span className="icon"><FaFileTextO /></span>รายงาน
                   </Link>
+                )}
                 <a className="navbar-item is-hidden-desktop" onClick={this.props.startLogout}>
                   ออกจากระบบ
                     </a>
