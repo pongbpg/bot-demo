@@ -77,7 +77,7 @@ export class CutOff extends React.Component {
                         <th className="has-text-left">รอบ</th>
                         <th className="has-text-centered">สถานะ</th>
                         <th className="has-text-centered">ยอดขาย</th>
-                        <th className="has-text-centered">จ่าหน้าซอง</th>
+                        {/* <th className="has-text-centered">จ่าหน้าซอง</th> */}
                         <th className="has-text-centered">แพ็คของ</th>
                         <th className="has-text-centered">เลขพัสดุ</th>
                         <th className="has-text-centered">สถานะอัพโหลด</th>
@@ -96,15 +96,15 @@ export class CutOff extends React.Component {
                                     PDF
                                 </a>
                             </td>
-                            <td className="has-text-centered">
+                            {/* <td className="has-text-centered">
                                 <a className="button is-primary is-centered is-small"
                                     href={`http://yaumjai.com:3000/api/demo/delivery?startDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
                                     target="_blank">
                                     PDF
                                 </a>
-                            </td>
+                            </td> */}
                             <td className="has-text-centered">
-                                <a className="button is-primary is-centered is-small"
+                                <a className="button is-info is-centered is-small"
                                     href={`http://yaumjai.com:3000/api/demo/delivery?startDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf&detail=show`}
                                     target="_blank">
                                     PDF
