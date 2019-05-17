@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import DatePicker from 'react-datepicker';
-import selectPages from '../selectors/pages';
 import moment from 'moment';
 moment.locale('th');
 export class ReportPage extends React.Component {
@@ -13,8 +12,8 @@ export class ReportPage extends React.Component {
             uid: props.auth.uid,
             sum: 'daily',
             auth: props.auth,
-            pages: props.pages,
-            page: (['owner', 'stock'].indexOf(props.auth.role) > -1 ? 'ALL' : props.pages[0].id)
+            // pages: props.pages,
+            // page: (['owner', 'stock'].indexOf(props.auth.role) > -1 ? 'ALL' : props.pages[0].id)
         }
         this.handleStartChange = this.handleStartChange.bind(this);
         this.handleEndChange = this.handleEndChange.bind(this);
@@ -75,7 +74,7 @@ export class ReportPage extends React.Component {
                                     />
                                 </div>
                             </div>
-                            <div className="level-item has-text-centered">
+                            {/* <div className="level-item has-text-centered">
                                 <div className="field">
                                     <label className="label">ยอดรวม</label>
                                     <div className="select">
@@ -85,7 +84,7 @@ export class ReportPage extends React.Component {
                                         </select>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </div>
@@ -151,7 +150,7 @@ export class ReportPage extends React.Component {
 }
 const mapStateToProps = (state, props) => ({
     auth: state.auth,
-    pages: state.pages//selectPages(state.pages, state.auth)
+    // pages: state.pages//selectPages(state.pages, state.auth)
 });
 const mapDispatchToProps = (dispatch, props) => ({
 });

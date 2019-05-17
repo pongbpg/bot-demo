@@ -250,7 +250,7 @@ FBลูกค้า:${doc.data().fb}
                                                                                 })
                                                                                 db.collection('payments').add({
                                                                                     orderId,
-                                                                                    ...bankData,
+                                                                                    ...resultOrder.data.banks[b],
                                                                                     admin: user.data().name,
                                                                                     fb: resultOrder.data.fb
                                                                                 })

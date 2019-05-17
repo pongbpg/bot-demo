@@ -85,51 +85,52 @@ export class CutOff extends React.Component {
                     </tr>
                 </thead>
                 <tbody>
-                    {this.state.cutoffs.sort((a, b) => a.id > b.id ? -1 : 1).map((ct, i) => {
-                        return <tr key={ct.id}>
-                            <td className="has-text-centered">{++i}</td>
-                            <td className="has-text-left">{moment(ct.id).format('ll')}</td>
-                            <td className="has-text-centered">{ct.cutoff ? 'ปิดรอบแล้ว' : 'ยังไม่ปิดรอบ'}</td>
-                            {this.state.auth.role == 'owner' && (<td className="has-text-centered">
-                                <a className="button is-primary is-centered is-small"
-                                    href={`http://yaumjai.com:3000/api/demo/cutoffSale?cutoffDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
-                                    target="_blank">
-                                    PDF
+                    {this.state.cutoffs.length > 0 &&
+                        this.state.cutoffs.sort((a, b) => a.id > b.id ? -1 : 1).map((ct, i) => {
+                            return <tr key={ct.id}>
+                                <td className="has-text-centered">{++i}</td>
+                                <td className="has-text-left">{moment(ct.id).format('ll')}</td>
+                                <td className="has-text-centered">{ct.cutoff ? 'ปิดรอบแล้ว' : 'ยังไม่ปิดรอบ'}</td>
+                                {this.state.auth.role == 'owner' && (<td className="has-text-centered">
+                                    <a className="button is-primary is-centered is-small"
+                                        href={`http://yaumjai.com:3000/api/demo/cutoffSale?cutoffDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
+                                        target="_blank">
+                                        PDF
                                 </a>
-                            </td>)}
-                            {/* <td className="has-text-centered">
+                                </td>)}
+                                {/* <td className="has-text-centered">
                                 <a className="button is-primary is-centered is-small"
                                     href={`http://yaumjai.com:3000/api/demo/delivery?startDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
                                     target="_blank">
                                     PDF
                                 </a>
                             </td> */}
-                            <td className="has-text-centered">
-                                <a className="button is-info is-centered is-small"
-                                    href={`http://yaumjai.com:3000/api/demo/delivery?startDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf&detail=show`}
-                                    target="_blank">
-                                    PDF
-                                </a>
-                            </td>
-                            {ct.cutoff ? (
                                 <td className="has-text-centered">
-                                    {this.state.cutoffDate !== ct.id
-                                        ? <input type="file" onChange={this.onFileChange} id={ct.id} />
-                                        : <div className="field is-grouped is-grouped-centered">
-                                            <div className="control">
-                                                <button className="button is-link" onClick={this.onUploadClick}>อัพโหลด</button>
-                                            </div>
-                                            <div className="control">
-                                                <button className="button is-text" onClick={this.onCancelClick}>ยกเลิก</button>
-                                            </div>
-                                        </div>
-                                    }
+                                    <a className="button is-info is-centered is-small"
+                                        href={`http://yaumjai.com:3000/api/demo/delivery?startDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf&detail=show`}
+                                        target="_blank">
+                                        PDF
+                                </a>
                                 </td>
-                            ) : <td className="has-text-centered">ปิดรอบก่อนถึงจะอัพไฟล์ได้</td>
-                            }
-                            <td className="has-text-centered">{ct.tracking ? 'อัพแล้ว' : 'ยังไม่ได้อัพ'}</td>
-                        </tr>;
-                    })}
+                                {ct.cutoff ? (
+                                    <td className="has-text-centered">
+                                        {this.state.cutoffDate !== ct.id
+                                            ? <input type="file" onChange={this.onFileChange} id={ct.id} />
+                                            : <div className="field is-grouped is-grouped-centered">
+                                                <div className="control">
+                                                    <button className="button is-link" onClick={this.onUploadClick}>อัพโหลด</button>
+                                                </div>
+                                                <div className="control">
+                                                    <button className="button is-text" onClick={this.onCancelClick}>ยกเลิก</button>
+                                                </div>
+                                            </div>
+                                        }
+                                    </td>
+                                ) : <td className="has-text-centered">ปิดรอบก่อนถึงจะอัพไฟล์ได้</td>
+                                }
+                                <td className="has-text-centered">{ct.tracking ? 'อัพแล้ว' : 'ยังไม่ได้อัพ'}</td>
+                            </tr>;
+                        })}
                 </tbody>
             </table>
 
