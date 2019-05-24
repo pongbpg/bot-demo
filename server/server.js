@@ -88,12 +88,15 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                 }
                 snapShot.forEach(product => {
                     if (pds.length == 0 || pds.indexOf(product.id) > -1)
-                        pt += `${product.id} ${product.name},\n`;
+                        pt += `${product.id}:${product.data().name}=${formatMoney(product.data().amount, 0)}\n`;
                 })
-                obj.messages.push({
-                    type: 'text',
-                    text: pt
-                })
+                const l = Math.ceil(pt.length / 2000) * 2000;
+                for (var i = 0; i < l; i += 2000) {
+                    obj.messages.push({
+                        type: 'text',
+                        text: pt.substr(i, 2000)
+                    })
+                }
                 reply(obj);
             })
     } else {
