@@ -18,18 +18,23 @@ export class AddProduct extends React.Component {
     }
     onSizeChange = (e) => {
         let size = e.target.value.replace(/\D/g, '');
-        if (size.length == 6) {
-            let newSize = '';
-            for (let i = 0; i < size.length; i++) {
-                newSize += size.charAt(i);
-                if ((i + 1) % 2 == 0 && i < 5) {
-                    newSize += '-';
-                }
-            }
-            this.setState({ size: newSize })
-        } else if (size.length < 6) {
-            this.setState({ size })
+        if (!isNaN(size)) {
+            this.setState({
+                size: Number(size)
+            })
         }
+        // if (size.length == 6) {
+        //     let newSize = '';
+        //     for (let i = 0; i < size.length; i++) {
+        //         newSize += size.charAt(i);
+        //         if ((i + 1) % 2 == 0 && i < 5) {
+        //             newSize += '-';
+        //         }
+        //     }
+        //     this.setState({ size: newSize })
+        // } else if (size.length < 6) {
+        //     this.setState({ size })
+        // }
     }
     onAmountChange = (e) => {
         const amount = e.target.value.replace(/\D/g, '');
@@ -58,7 +63,7 @@ export class AddProduct extends React.Component {
     onAddClick = (e) => {
         this.props.startAddProduct({
             name: this.state.name,
-            size: this.state.size,
+            size: this.state.size == '' ? 0 : this.state.size,
             amount: this.state.amount == '' ? 0 : this.state.amount,
             price: this.state.price == '' ? 0 : this.state.price,
             cost: this.state.cost == '' ? 0 : this.state.cost
@@ -109,8 +114,8 @@ export class AddProduct extends React.Component {
                             <div className="field-body">
                                 <div className="field">
                                     <div className="control">
-                                        <input className="input" type="text" placeholder="ขนาด"
-                                            value={this.state.size}
+                                        <input className="input" type="text" placeholder="เริ่มต้น"
+                                            value={this.state.size == '' ? '' : Money(this.state.size, 0)}
                                             onKeyPress={this.onHandleKeyPress}
                                             onChange={this.onSizeChange} />
                                     </div>
@@ -124,7 +129,7 @@ export class AddProduct extends React.Component {
                             <div className="field-body">
                                 <div className="field">
                                     <div className="control">
-                                        <input className="input" type="text" placeholder="COST"
+                                        <input className="input" type="text" placeholder="ต้นทุน"
                                             value={this.state.cost == '' ? '' : Money(this.state.cost, 0)}
                                             onKeyPress={this.onHandleKeyPress}
                                             onChange={this.onCostChange} />

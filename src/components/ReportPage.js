@@ -99,7 +99,7 @@ export class ReportPage extends React.Component {
                                 </tr>
                             </thead>
                             <tbody>
-                                < tr >
+                                {/* < tr >
                                     <td className="has-text-centered">1</td>
                                     <td className="has-text-centered">STATEMENTการโอนแต่ละธนาคาร (วันที่เริ่ม-ถึงวันที่)</td>
                                     <td className="has-text-centered">
@@ -118,9 +118,9 @@ export class ReportPage extends React.Component {
                                             </p>
                                         </div>
                                     </td>
-                                </tr>
+                                </tr> */}
                                 < tr >
-                                    <td className="has-text-centered">2</td>
+                                    <td className="has-text-centered">1</td>
                                     <td className="has-text-centered">ยอดโอนรวมแต่ละธนาคาร (วันที่เริ่ม-ถึงวันที่)</td>
                                     <td className="has-text-centered">
                                         <div className="field is-grouped is-grouped-centered">

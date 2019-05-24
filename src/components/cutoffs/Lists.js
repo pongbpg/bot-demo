@@ -78,10 +78,11 @@ export class CutOff extends React.Component {
                         <th className="has-text-left">รอบ</th>
                         <th className="has-text-centered">สถานะ</th>
                         {this.state.auth.role == 'owner' && (<th className="has-text-centered">ยอดขาย</th>)}
-                        {/* <th className="has-text-centered">จ่าหน้าซอง</th> */}
+                        {this.state.auth.role == 'owner' && (<th className="has-text-centered">รายการโอน</th>)}
+                        {this.state.auth.role == 'owner' && (<th className="has-text-centered">สินค้าที่ขาย</th>)}
                         <th className="has-text-centered">แพ็คของ</th>
-                        <th className="has-text-centered">เลขพัสดุ</th>
-                        <th className="has-text-centered">สถานะอัพโหลด</th>
+                        {/* <th className="has-text-centered">เลขพัสดุ</th>
+                        <th className="has-text-centered">สถานะอัพโหลด</th> */}
                     </tr>
                 </thead>
                 <tbody>
@@ -98,13 +99,20 @@ export class CutOff extends React.Component {
                                         PDF
                                 </a>
                                 </td>)}
-                                {/* <td className="has-text-centered">
-                                <a className="button is-primary is-centered is-small"
-                                    href={`http://yaumjai.com:3000/api/demo/delivery?startDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
-                                    target="_blank">
-                                    PDF
+                                {this.state.auth.role == 'owner' && (<td className="has-text-centered">
+                                    <a className="button is-danger is-centered is-small"
+                                        href={`http://localhost:4000/api/demo/dailyStatement?uid=${this.state.auth.uid}&cutoffDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
+                                        target="_blank">
+                                        PDF
                                 </a>
-                            </td> */}
+                                </td>)}
+                                {this.state.auth.role == 'owner' && (<td className="has-text-centered">
+                                    <a className="button is-warning is-centered is-small"
+                                        href={`http://localhost:4000/api/demo/dailyProduct?uid=${this.state.auth.uid}&cutoffDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
+                                        target="_blank">
+                                        PDF
+                                </a>
+                                </td>)}
                                 <td className="has-text-centered">
                                     <a className="button is-info is-centered is-small"
                                         href={`http://yaumjai.com:3000/api/demo/delivery?startDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf&detail=show`}
@@ -112,7 +120,7 @@ export class CutOff extends React.Component {
                                         PDF
                                 </a>
                                 </td>
-                                {ct.cutoff ? (
+                                {/* {ct.cutoff ? (
                                     <td className="has-text-centered">
                                         {this.state.cutoffDate !== ct.id
                                             ? <input type="file" onChange={this.onFileChange} id={ct.id} />
@@ -128,7 +136,7 @@ export class CutOff extends React.Component {
                                     </td>
                                 ) : <td className="has-text-centered">ปิดรอบก่อนถึงจะอัพไฟล์ได้</td>
                                 }
-                                <td className="has-text-centered">{ct.tracking ? 'อัพแล้ว' : 'ยังไม่ได้อัพ'}</td>
+                                <td className="has-text-centered">{ct.tracking ? 'อัพแล้ว' : 'ยังไม่ได้อัพ'}</td> */}
                             </tr>;
                         })}
                 </tbody>

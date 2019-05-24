@@ -12,7 +12,7 @@ export class StockPage extends React.Component {
             auth: props.auth,
             id: '',
             name: '',
-            size: '',
+            size: 0,
             amount: 0,
             cost: 0,
             price: 0,
@@ -36,18 +36,23 @@ export class StockPage extends React.Component {
     }
     onSizeChange = (e) => {
         let size = e.target.value.replace(/\D/g, '');
-        if (size.length == 6) {
-            let newSize = '';
-            for (let i = 0; i < size.length; i++) {
-                newSize += size.charAt(i);
-                if ((i + 1) % 2 == 0 && i < 5) {
-                    newSize += '-';
-                }
-            }
-            this.setState({ size: newSize })
-        } else if (size.length < 6) {
-            this.setState({ size })
+        if (!isNaN(size)) {
+            this.setState({
+                size: Number(size)
+            })
         }
+        // if (size.length == 6) {
+        //     let newSize = '';
+        //     for (let i = 0; i < size.length; i++) {
+        //         newSize += size.charAt(i);
+        //         if ((i + 1) % 2 == 0 && i < 5) {
+        //             newSize += '-';
+        //         }
+        //     }
+        //     this.setState({ size: newSize })
+        // } else if (size.length < 6) {
+        //     this.setState({ size })
+        // }
     }
     onFilterChange = (e) => {
         const filter = e.target.value.replace(/\D/g, '');
@@ -108,7 +113,7 @@ export class StockPage extends React.Component {
                 cost: this.state.cost,
                 price: this.state.price
             }).then(() => {
-                this.setState({ isLoading: '', action: false, id: '', name: '', size: '', amount: 0, price: 0, cost: 0 })
+                this.setState({ isLoading: '', action: false, id: '', name: '', size: 0, amount: 0, price: 0, cost: 0 })
             })
         } else {
             alert('กรุณาเลือกใหม่อีกรอบ')
@@ -121,7 +126,7 @@ export class StockPage extends React.Component {
                 this.props.startDeleteProduct({
                     id: this.state.id
                 }).then(() => {
-                    this.setState({ isLoading: '', action: false, id: '', name: '', size: '', amount: 0, price: 0, cost: 0 })
+                    this.setState({ isLoading: '', action: false, id: '', name: '', size: 0, amount: 0, price: 0, cost: 0 })
                 })
             }
         } else {
@@ -131,6 +136,7 @@ export class StockPage extends React.Component {
     render() {
         let sumCost = 0;
         let sumAmount = 0;
+        let sumSize = 0;
         return (
             <section className="hero">
                 <div className="hero-head">
@@ -157,9 +163,9 @@ export class StockPage extends React.Component {
                                 {/* <th className="has-text-centered">ลำดับ</th> */}
                                 <th className="has-text-left">รหัส</th>
                                 <th className="has-text-left" width="30%">ชื่อสินค้า</th>
-                                <th className="has-text-left">ขนาด</th>
-                                {this.state.auth.role == 'owner' && (<th className="has-text-right">COST</th>)}
+                                {this.state.auth.role == 'owner' && (<th className="has-text-right">ต้นทุน</th>)}
                                 <th className="has-text-right">ราคา</th>
+                                <th className="has-text-right">เริ่มต้น</th>
                                 <th className="has-text-right">คงเหลือ</th>
                                 {this.state.auth.role == 'owner' && (< th className="has-text-right">จัดการ</th>)}
                             </tr>
@@ -170,13 +176,14 @@ export class StockPage extends React.Component {
                             }).filter(f => f.amount == Number(this.state.filter) || this.state.filter == '').map((st, i) => {
                                 sumCost += st.cost * st.amount;
                                 sumAmount += st.amount;
+                                sumSize += st.size;
                                 if (this.state.id !== st.id) {
                                     return <tr key={st.id}>
                                         <td className="has-text-left">{st.id}</td>
                                         <td className="has-text-left">{st.name}</td>
-                                        <td className="has-text-centered">{st.size}</td>
                                         {this.state.auth.role == 'owner' && (<td className="has-text-right">{Money(st.cost, 0)}</td>)}
                                         <td className="has-text-right">{Money(st.price, 0)}</td>
+                                        <td className="has-text-right">{Money(st.size, 0)}</td>
                                         <td className="has-text-right">{Money(st.amount, 0)}</td>
                                         {this.state.auth.role == 'owner' && (<td className="has-text-right">
                                             <a className="button is-outlined"
@@ -201,21 +208,12 @@ export class StockPage extends React.Component {
                                                 />
                                             </div>
                                         </td>
-                                        <td className="has-text-left">
-                                            <div className="control">
-                                                <input type="text" name={this.state.id}
-                                                    className="input is-rounded has-text-left"
-                                                    placeholder="ขนาด"
-                                                    value={this.state.size}
-                                                    onChange={this.onSizeChange}
-                                                />
-                                            </div>
-                                        </td>
+
                                         <td className="has-text-right">
                                             <div className="control">
                                                 <input type="text" name={this.state.id}
                                                     className="input is-rounded has-text-right"
-                                                    placeholder="COST"
+                                                    placeholder="ต้นทุน"
                                                     onFocus={this.handleSelectAll}
                                                     value={Money(this.state.cost, 0)}
                                                     onChange={this.onCostChange}
@@ -230,6 +228,16 @@ export class StockPage extends React.Component {
                                                     onFocus={this.handleSelectAll}
                                                     value={Money(this.state.price, 0)}
                                                     onChange={this.onPriceChange}
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="has-text-left">
+                                            <div className="control">
+                                                <input type="text" name={this.state.id}
+                                                    className="input is-rounded has-text-left"
+                                                    placeholder="เริ่มต้น"
+                                                    value={Money(this.state.size, 0)}
+                                                    onChange={this.onSizeChange}
                                                 />
                                             </div>
                                         </td>
@@ -315,9 +323,10 @@ export class StockPage extends React.Component {
                             })
                             }
                             <tr>
-                                <td className="has-text-centered" colSpan={3}>รวม</td>
-                                <td className="has-text-right">{Money(sumCost, 0)}</td>
-                                {this.state.auth.role == 'owner' && (<td></td>)}
+                                <td className="has-text-centered" colSpan={2}>รวม</td>
+                                {this.state.auth.role == 'owner' && (<td className="has-text-right">{Money(sumCost, 0)}</td>)}
+                                {this.state.auth.role == 'owner' && (<td className="has-text-right"></td>)}
+                                <td className="has-text-right">{Money(sumSize, 0)}</td>
                                 <td className="has-text-right">{Money(sumAmount, 0)}</td>
                                 {this.state.auth.role == 'owner' && (<td></td>)}
                             </tr>
