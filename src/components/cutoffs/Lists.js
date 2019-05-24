@@ -101,7 +101,7 @@ export class CutOff extends React.Component {
                                 </td>)}
                                 {this.state.auth.role == 'owner' && (<td className="has-text-centered">
                                     <a className="button is-danger is-centered is-small"
-                                        href={`http://localhost:4000/api/demo/dailyStatement?uid=${this.state.auth.uid}&cutoffDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
+                                        href={`http://yaumjai.com:3000/api/demo/dailyStatement?uid=${this.state.auth.uid}&cutoffDate=${moment(ct.id).format('YYYYMMDD')}&file=pdf`}
                                         target="_blank">
                                         PDF
                                 </a>
