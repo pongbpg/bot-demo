@@ -75,40 +75,47 @@ app.post('/api/linebot', jsonParser, (req, res) => {
             data.balance = ((data.net || 0) + data.payouts) - (data.cash || 0);
             // console.log(data.sale, data.net, data.payouts)
             if (moment(date).isValid()) {
-                db.collection('shops').doc(date).set({
-                    ...data, date
-                }).then(doc => {
-                    const walRef = db.collection('aggregation').doc('wallet')
-                    walRef.get()
-                        .then(doc => {
-                            const OldCash = doc.data().cash;
-                            const cash = doc.data().cash + data.net;
-                            const OldDebit = doc.data().debit;
-                            const debit = doc.data().debit + data.debit;
-                            walRef.set({ cash, debit })
-                            obj.messages.push({
-                                type: 'text',
-                                text: `สรุปยอดวันที่ ${moment(date).format('ll')}
-ยอดขายทั้งหมด ${data.sale}
+                db.collection('shops').doc(date)
+                    .get()
+                    .then(docShop => {
+                        const walRef = db.collection('aggregation').doc('wallet')
+                        walRef.get()
+                            .then(docWal => {
+                                let OldCash = docWal.data().cash;
+                                let cash = 0;
+                                let OldDebit = docWal.data().debit;
+                                let debit = 0;
+                                if (docShop.exists) {
+                                    OldCash -= docShop.data().net;
+                                    OldDebit -= docShop.data().debit;
+                                }
+                                cash = OldCash + data.net;
+                                debit = OldDebit + data.debit;
 
-+++เงินสด+++
-ยอดขาย ${data.cash}
-นับได้จริง ${data.net}
-ค่าใช้จ่ายทั้งหมด ${data.payouts}
-${data.payout.map(p => '-' + p.detail + ' ' + p.value)}
----------------------
-ยอดเงินสดทั้งหมด ${OldCash} + ${data.net} = ${cash}
-
-+++เดบิต+++
-ยอดขาย ${data.debit}
---------------------
-ยอดเดบิตทั้งหมด ${OldDebit} + ${data.debit} = ${debit}
-
-`})
-                            reply(obj);
-                            // res.send(doc)
-                        })
-                })
+                                db.collection('shops').doc(date).set({ ...data, date })
+                                walRef.set({ cash, debit })
+                                obj.messages.push({
+                                    type: 'text',
+                                    text: `สรุปยอดวันที่ ${moment(date).format('ll')}
+    ยอดขายทั้งหมด ${data.sale}
+    
+    +++เงินสด+++
+    ยอดขาย ${data.cash}
+    นับได้จริง ${data.net}
+    ค่าใช้จ่ายทั้งหมด ${data.payouts}
+    ${data.payout.map(p => '-' + p.detail + ' ' + p.value)}
+    ---------------------
+    ยอดเงินสดทั้งหมด ${OldCash} + ${data.net} = ${cash}
+    
+    +++เดบิต+++
+    ยอดขาย ${data.debit}
+    --------------------
+    ยอดเดบิตทั้งหมด ${OldDebit} + ${data.debit} = ${debit}
+    
+    `})
+                                reply(obj);
+                            })
+                    })
             } else {
                 obj.messages.push({
                     type: 'text',
