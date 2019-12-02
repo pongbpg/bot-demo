@@ -44,7 +44,7 @@ app.post('/api/linebot', jsonParser, (req, res) => {
 
     if (msg.indexOf('#shop') > -1) {
         const msgs = msg.split('#');
-        let data = { sale: 0, cash: 0, payouts: 0, balance: 0, net: 0 };
+        let data = { sale: 0, cash: 0, payouts: 0, balance: 0, net: 0, debit: 0 };
         msgs.map(msg => {
             if (msg.split(':').length == 2) {
                 const key = msg.split(':')[0];
