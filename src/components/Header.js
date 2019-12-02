@@ -2,13 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { startLogout } from '../actions/auth';
-import MdMailOutline from 'react-icons/lib/md/mail-outline';
 import MdAlarmOn from 'react-icons/lib/md/alarm-on';
 import FaSearch from 'react-icons/lib/fa/search';
 import FaHome from 'react-icons/lib/fa/home';
 import FaFileTextO from 'react-icons/lib/fa/file-text-o';
-import MdPanTool from 'react-icons/lib/md/pan-tool';
-import MdAttachMoney from 'react-icons/lib/md/attach-money';
 import MdEdit from 'react-icons/lib/md/edit';
 import MdDesktopWindows from 'react-icons/lib/md/desktop-windows';
 export class Header extends React.Component {
@@ -64,41 +61,13 @@ export class Header extends React.Component {
                 <Link className="navbar-item" to="/home">
                   <span className="icon"><FaHome /></span>หน้าแรก
                 </Link>
-                <Link className="navbar-item" to="/">
-                  <span className="icon"><FaSearch /></span>ค้นหาพัสดุ
-                </Link>
-                < Link className="navbar-item" to="/cutoff">
-                  <span className="icon"><MdAlarmOn /></span>ปิดรอบ
-                    </Link>
-                <div className="navbar-item has-dropdown is-hoverable">
-                  <a className="navbar-link">Live</a>
-                  <div className="navbar-dropdown">
-                    <Link className="navbar-item" to="/live/edit">
-                      <span className="icon"><MdEdit /></span>แก้ไข
-                  </Link>
-                    <a className="navbar-item" href="/live/show" target="_blank">
-                      <span className="icon"><MdDesktopWindows /></span>แสดง
-                  </a>
-                  </div>
-                </div>
 
-                {this.state.auth.role == 'owner' && (
-                  <div className="navbar-item has-dropdown is-hoverable">
-                    <a className="navbar-link">จัดการ</a>
-                    <div className="navbar-dropdown">
-                      <Link className="navbar-item" to="/manage/admins">
-                        แอดมินไลน์
-                     </Link>
-                      <Link className="navbar-item" to="/manage/emails">
-                        ผู้ใช้งาน
-                     </Link>
-                    </div>
-                  </div>
-                )}
-                {this.state.auth.role == 'owner' && (<Link className="navbar-item" to="/report">
+
+
+                <Link className="navbar-item" to="/report">
                   <span className="icon"><FaFileTextO /></span>รายงาน
                   </Link>
-                )}
+
                 <a className="navbar-item is-hidden-desktop" onClick={this.props.startLogout}>
                   ออกจากระบบ
                     </a>

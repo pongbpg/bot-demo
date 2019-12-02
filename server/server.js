@@ -8,20 +8,20 @@ const bodyParser = require('body-parser')
 const admin = require('firebase-admin');
 const moment = require('moment');
 moment.locale('th');
-// const serviceAccount = require('./key.json');
+const serviceAccount = require('./key.json');
 admin.initializeApp({
-    // credential: admin.credential.cert(serviceAccount)
-    credential: admin.credential.cert({
-        "type": "service_account",
-        "project_id": "demodb-26ade",
-        "private_key_id": process.env.ADMIN_PRIVATE_KEY_ID,
-        "private_key": process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        "client_email": process.env.CLIENT_EMAIL,
-        "client_id": process.env.CLIENT_ID,
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    })
+    credential: admin.credential.cert(serviceAccount)
+    // credential: admin.credential.cert({
+    //     "type": "service_account",
+    //     "project_id": "demodb-26ade",
+    //     "private_key_id": process.env.ADMIN_PRIVATE_KEY_ID,
+    //     "private_key": process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    //     "client_email": process.env.CLIENT_EMAIL,
+    //     "client_id": process.env.CLIENT_ID,
+    //     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    //     "token_uri": "https://oauth2.googleapis.com/token",
+    //     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    // })
 });
 var db = admin.firestore();
 const settings = {/* your settings... */ timestampsInSnapshots: true };
@@ -36,291 +36,90 @@ app.post('/api/linebot', jsonParser, (req, res) => {
     const request = req.body.events[0];
     const msg = request.message.text;
     const userId = request.source.userId;
-    const adminRef = db.collection('admins').doc(userId);
-    const ownerRef = db.collection('owners').doc(userId);
+
     let obj = {
         replyToken: request.replyToken,
         messages: []
     };
-    if (msg.indexOf('@@admin:') > -1 && msg.split(':').length == 2) {
-        adminRef.set({
-            userId,
-            name: msg.split(':')[1].replace(/\s/g, ''),
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            role: 'admin'
+
+    if (msg.indexOf('#shop') > -1) {
+        const msgs = msg.split('#');
+        let data = {};
+        msgs.map(msg => {
+            if (msg.split(':').length == 2) {
+                const key = msg.split(':')[0];
+                const value = key != 'shop' && key != 'payout'
+                    ? Number(msg.split(':')[1])
+                    : msg.split(':')[1];
+                data[key] = value;
+            }
         })
-            .then(admin => {
-                obj.messages.push({
-                    type: 'text',
-                    text: `${emoji(0x10002D)}${emoji(0x10002D)} ลงทะเบียน ${msg.split(':')[1]} เป็น Admin เรียบร้อยค่ะ ${emoji(0x10002D)}${emoji(0x10002D)}`
-                })
-                reply(obj);
-            })
-    } else if (msg.indexOf('@@owner:') > -1 && msg.split(':').length == 2) {
-        adminRef.set({
-            userId,
-            name: msg.split(':')[1],
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            role: 'owner'
-        })
-            .then(owner => {
-
-                obj.messages.push({
-                    type: 'text',
-                    text: `${emoji(0x100058)}${emoji(0x100058)} ลงทะเบียน ${msg.split(':')[1]} เป็น Owner เรียบร้อยค่ะ ${emoji(0x100058)}${emoji(0x100058)}`
-                })
-                reply(obj);
-            })
-    } else if (msg.indexOf('@@format') > -1) {
-        obj.messages.push({
-            type: 'text',
-            text: `#n:ชื่อผู้รับสินค้า\n#t:เบอร์โทรศัพท์\n#a:ที่อยู่\n#o:รายการสินค้า\n#b:ชื่อธนาคารหรือCOD\n#p:ยอดโอน\n#f:Facebookลูกค้า\n#l:Lineลูกค้า\n#z:ชื่อเพจหรือLine@`
-        })
-        reply(obj);
-    } else if (msg.indexOf('@@product') > -1) {
-        db.collection('products').get()
-            .then(snapShot => {
-                let pt = `${emoji(0x10005C)}รายการสินค้า${emoji(0x100060)}\n`;
-                let pds = [];
-                // let price = 0;
-                if (msg.split(':').length == 2) {
-                    pds = msg.split(':')[1].replace(/\s/g, '').split(',');
-                }
-                snapShot.forEach(product => {
-                    if (pds.length == 0 || pds.indexOf(product.id) > -1)
-                        pt += `${product.id}:${product.data().name}=${formatMoney(product.data().amount, 0)}\n`;
-                })
-                const l = Math.ceil(pt.length / 2000) * 2000;
-                for (var i = 0; i < l; i += 2000) {
-                    obj.messages.push({
-                        type: 'text',
-                        text: pt.substr(i, 2000)
-                    })
-                }
-                reply(obj);
-            })
-    } else {
-        adminRef.get()
-            .then(user => {
-                if (user.exists) {
-                    if (request.source.type == 'group') {
-                        const groupId = request.source.groupId;
-                        if (msg.indexOf('@@ยกเลิก:') > -1 && msg.split(':').length == 2) {
-                            const orderId = msg.split(':')[1];
-                            const orderRef = db.collection('orders').doc(orderId);
-                            orderRef.get()
-                                .then(order => {
-                                    if (order.exists) {
-                                        if (order.data().cutoff && user.data().role == 'admin') {
-                                            obj.messages.push({
-                                                type: 'text',
-                                                text: `${emoji(0x100035)}ไม่สามารถยกเลิกรายการสั่งซื้อ ${orderId}\nเนื่องจากได้ทำการตัดรอบไปแล้วค่ะ${emoji(0x1000AE)}`
-                                            })
-                                            reply(obj);
-                                        } else {
-                                            async function callback() {
-                                                for (var p = 0; p < order.data().product.length; p++) {
-                                                    await db.collection('products').doc(order.data().product[p].code).get()
-                                                        .then(product => {
-                                                            const balance = product.data().amount + order.data().product[p].amount;
-                                                            db.collection('products').doc(order.data().product[p].code)
-                                                                .set({ amount: balance }, { merge: true })
-                                                        })
-                                                }
-                                                await db.collection('payments')
-                                                    .where('orderId', '==', orderId)
-                                                    .get()
-                                                    .then(snapShot => {
-                                                        snapShot.forEach(pay => {
-                                                            pay.ref.delete();
-                                                        })
-                                                    })
-                                                await orderRef.delete()
-                                                    .then(cancel => {
-                                                        obj.messages.push({
-                                                            type: 'text',
-                                                            text: `${emoji(0x100035)}ยกเลิกรายการสั่งซื้อ ${orderId} เรียบร้อยค่ะ`
-                                                        })
-                                                        reply(obj);
-                                                    })
-                                            }
-                                            callback();
-
-                                        }
-                                    } else {
-                                        obj.messages.push({
-                                            type: 'text',
-                                            text: `${emoji(0x100035)}ไม่มีรายการสั่งซื้อนี้: ${orderId}\nกรุณาตรวจสอบ "รหัสสั่งซื้อ" ค่ะ`
-                                        })
-                                    }
-                                    reply(obj);
-                                })
-                        } else if (msg.indexOf('#') > -1) {
-                            initMsgOrder(msg)
-                                .then(resultOrder => {
-                                    if (resultOrder.success) {
-                                        db.collection('counter').doc('orders').get()
-                                            .then(counts => {
-                                                const countsData = counts.data();
-                                                let no = 1;
-                                                let cutoff = countsData.cutoff;
-                                                if (countsData.date == yyyymmdd()) {
-                                                    no = countsData.no + 1;
-                                                }
-                                                // else {
-                                                //     if (cutoff == true) cutoff = false;
-                                                // }
-                                                let orderId = yyyymmdd() + '-' + fourDigit(no);
-                                                let orderDate = yyyymmdd();
-                                                let cutoffDate = countsData.cutoffDate;
-                                                let cutoffOk = true;
-                                                if (resultOrder.data.id && user.data().role == 'owner') { //edit with id
-                                                    orderId = resultOrder.data.id;
-                                                    orderDate = resultOrder.data.id.split('-')[0];
-                                                } else {
-                                                    if (cutoff === false) {
-                                                        db.collection('counter').doc('orders').update({ date: orderDate, no })
-                                                        // cutoff = false;
-                                                    } else {
-                                                        cutoffOk = false;
-                                                    }
-
-                                                }
-                                                if (cutoffOk == true) {
-                                                    db.collection('orders').doc(orderId)
-                                                        .set(Object.assign({
-                                                            userId, groupId,
-                                                            admin: user.data().name,
-                                                            cutoffDate,
-                                                            cutoff,
-                                                            tracking: '',
-                                                            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                                                            orderDate
-                                                        }, resultOrder.data))
-                                                        .then(order => {
-                                                            db.collection('groups').doc(groupId).set({})
-                                                            async function callback() {
-                                                                for (var p = 0; p < resultOrder.data.product.length; p++) {
-                                                                    await db.collection('products').doc(resultOrder.data.product[p].code).get()
-                                                                        .then(product => {
-                                                                            const amount = product.data().amount - resultOrder.data.product[p].amount;
-                                                                            db.collection('products').doc(resultOrder.data.product[p].code).set({ amount }, { merge: true })
-                                                                        })
-                                                                }
-                                                                await db.collection('orders')
-                                                                    .where('cutoffDate', '==', cutoffDate)
-                                                                    .where('tel', '==', resultOrder.data.tel)
-                                                                    .get()
-                                                                    .then(snapShot => {
-                                                                        let orders = [];
-                                                                        snapShot.forEach(doc => {
-                                                                            orders.push({ id: doc.id, ...doc.data() })
-                                                                        })
-                                                                        const txts = txtListOrders(orders);
-                                                                        const l = Math.ceil(txts.length / 2000) * 2000;
-                                                                        for (var i = 0; i < l; i += 2000) {
-                                                                            obj.messages.push({
-                                                                                type: 'text',
-                                                                                text: txts.substr(i, 2000)
-                                                                            })
-                                                                        }
-                                                                    })
-                                                                // await  obj.messages.push({
-                                                                //     type: 'text',
-                                                                //     text: `รหัสสั่งซื้อ: ${orderId}\n${resultOrder.text}`
-                                                                // })
-                                                                await obj.messages.push({
-                                                                    type: 'text',
-                                                                    text: `@@ยกเลิก:${orderId}`
-                                                                })
-                                                                for (var b = 0; b < resultOrder.data.banks.length; b++) {
-                                                                    if (['COD', 'RS'].indexOf(resultOrder.data.banks[b].name) == -1) {
-                                                                        await db.collection('payments')
-                                                                            .where('name', '==', resultOrder.data.banks[b].name)
-                                                                            .where('date', '==', resultOrder.data.banks[b].date)
-                                                                            .where('time', '==', resultOrder.data.banks[b].time)
-                                                                            .where('price', '==', resultOrder.data.banks[b].price)
-                                                                            .get()
-                                                                            .then(snapShot => {
-                                                                                snapShot.forEach(doc => {
-                                                                                    obj.messages.push({
-                                                                                        type: 'text',
-                                                                                        text: `⚠กรุณาตรวจสอบรายการโอนนี้มีซ้ำ⚠
-รหัสสั่งซื้อ:${doc.data().orderId} แอดมิน:${doc.data().admin}
-FBลูกค้า:${doc.data().fb}
-รายการที่ซ้ำ: ${doc.data().name} ${moment(doc.data().date, 'YYYYMMDD').format('DD/MM/YY')} ${doc.data().time} จำนวน ${formatMoney(doc.data().price, 0)} บาท`
-                                                                                    })
-                                                                                })
-                                                                                db.collection('payments').add({
-                                                                                    orderId,
-                                                                                    ...resultOrder.data.banks[b],
-                                                                                    admin: user.data().name,
-                                                                                    fb: resultOrder.data.fb
-                                                                                })
-                                                                            })
-                                                                    }
-                                                                }
-                                                                await reply(obj);
-                                                            }
-                                                            callback();
-                                                        })
-                                                } else {
-                                                    obj.messages.push({ type: `text`, text: `${emoji(0x1000A6)}รายการสั่งซื้อไม่สำเร็จ! เนื่องจากยังไม่ได้เปิดรอบสั่งซื้อ` })
-                                                    reply(obj);
-                                                }
-
-                                            })
-
-                                    } else {
-
-                                        obj.messages.push({ type: `text`, text: `${emoji(0x1000A6)} รายการสั่งของคุณไม่ถูกต้องค่ะ\nกรุณาตรวจสอบ ${resultOrder.text}` })
-                                        reply(obj);
-                                    }
-                                })
-
+        if (data.shop) {
+            const date = '20' + data.shop.substr(0, 2) + '-' + data.shop.substr(2, 2) + '-' + data.shop.substr(4, 2)
+            data.payouts = 0;
+            if (data.payout) {
+                data.payout = data.payout.split(',')
+                    .map(pay => {
+                        if (pay.split('=').length == 2) {
+                            const value = pay.split('=')[1];
+                            if (!isNaN(value)) {
+                                data.payouts += Number(value)
+                                return {
+                                    detail: pay.split('=')[0],
+                                    value: Number(value)
+                                }
+                            }
                         }
-                    } else {
-                        obj.messages.push({
-                            type: 'text',
-                            text: `คุยในกลุ่มดีกว่านะคะ`
+                    })
+            }
+            data.balance = ((data.net || 0) + data.payouts) - (data.cash || 0);
+            // console.log(data.sale, data.net, data.payouts)
+            if (moment(date).isValid()) {
+                db.collection('shops').doc(date).set({
+                    ...data, date
+                }).then(doc => {
+                    const walRef = db.collection('aggregation').doc('wallet')
+                    walRef.get()
+                        .then(doc => {
+                            const OldCash = doc.data().cash;
+                            const cash = doc.data().cash + data.net;
+                            const OldDebit = doc.data().debit;
+                            const debit = doc.data().debit + data.debit;
+                            walRef.set({ cash, debit })
+                            obj.messages.push({
+                                type: 'text',
+                                text: `สรุปยอดวันที่ ${moment(date).format('ll')}
+ยอดขายทั้งหมด ${data.sale}
+
++++เงินสด+++
+ยอดขาย ${data.cash}
+นับได้จริง ${data.net}
+ค่าใช้จ่ายทั้งหมด ${data.payouts}
+${data.payout.map(p => '-' + p.detail + ' ' + p.value)}
+---------------------
+ยอดเงินสดทั้งหมด ${OldCash} + ${data.net} = ${cash}
+
++++เดบิต+++
+ยอดขาย ${data.debit}
+--------------------
+ยอดเดบิตทั้งหมด ${OldDebit} + ${data.debit} = ${debit}
+
+`})
+                            reply(obj, LINE_TH);
+                            // res.send(doc)
                         })
-                        reply(obj);
-                    }
-                } else {
-                    return;
-                }
-            })
+                })
+            } else {
+                obj.messages.push({
+                    type: 'text',
+                    text: 'วันที่ไม่ถูกต้อง เช่น วันที่ 1 ธันวาคม 2019 => 191201'
+                })
+                reply(obj, LINE_TH);
+            }
+        }
     }
 })
-app.post('/api/boardcast', jsonParser, (req, res) => {
-    const boardcasts = req.body.boardcasts;
-    for (var bc = 0; bc < boardcasts.length; bc++) {
-        push(boardcasts[bc]);
-    }
-    return;
-})
-app.post('/api/auth/disabled', jsonParser, (req, res) => {
-    admin.auth().updateUser(req.body.uid, {
-        disabled: req.body.disabled
-    }).then(function (userRecord) {
-        // See the UserRecord reference doc for the contents of userRecord.
-        // console.log("Successfully updated user", userRecord.toJSON());
-        res.json(userRecord.toJSON())
-    }).catch(function (error) {
-        // console.log("Error updating user:", error);
-    });
-})
-app.post('/api/auth/create', jsonParser, (req, res) => {
-    admin.auth().createUser({
-        ...req.body
-    }).then(function (userRecord) {
-        // See the UserRecord reference doc for the contents of userRecord.
-        // console.log("Successfully updated user", userRecord.toJSON());
-        res.json(userRecord.toJSON())
-    }).catch(function (error) {
-        // console.log("Error updating user:", error);
-    });
-})
+
 app.use(express.static(publicPath));
 app.get('*', (req, res) => {
     res.sendFile(path.join(publicPath, 'index.html'))
@@ -348,225 +147,6 @@ const push = (obj) => {
         body: JSON.stringify(obj)
     });
 };
-const initMsgOrder = (txt) => {
-
-    // return db.collection('products').get()
-    //     .then(snapShot => {
-    let orders = [];
-    // snapShot.forEach(product => {
-    //     products.push({ id: product.id, ...product.data() })
-    // })
-    let data = Object.assign(...txt.split('#').filter(f => f != "")
-        .map(m => {
-            if (m.split(':').length == 2) {
-                const dontReplces = ["name", "fb", "addr"];
-                let key = m.split(':')[0].toLowerCase();
-                switch (key) {
-                    case 'n': key = 'name'; break;
-                    case 't': key = 'tel'; break;
-                    case 'a': key = 'addr'; break;
-                    case 'o': key = 'product'; break;
-                    case 'b': key = 'banks'; break;
-                    case 'p': key = 'price'; break;
-                    case 'f': key = 'fb'; break;
-                    // case 'l': key = 'fb'; break;
-                    // case 'z': key = 'page'; break;
-                    // case 'd': key = 'delivery'; break;
-                    // case 'cutoffdate': key = 'cutoffDate'; break;
-                    default: key;
-                }
-                let value = m.split(':')[1];
-                if (!dontReplces.includes(key)) value = value.replace(/\s/g, '');
-                if (key !== 'addr' && key !== 'fb') value = value.replace(/\n/g, '').toUpperCase();
-                if (key == 'tel') {
-                    value = value.replace(/\D/g, ''); //เหลือแต่ตัวเลข
-                    if (value.length != 10) {
-                        value = `${emoji(0x1000A6)}เบอร์โทรไม่ครบ 10 หลักundefined`
-                    } else {
-                        if (value.substr(0, 2) == '00') {
-                            value = value.substr(1, 10)
-                        }
-                    }
-                }
-                // if (key !== 'price') {
-                value = value.trim();
-                if (key == 'product') {
-                    const str = value;
-                    // let orders = [];
-                    let arr = str.split(',');
-                    for (var a in arr) {
-                        if (arr[a].split('=').length == 2) {
-                            const code = arr[a].split('=')[0].toUpperCase();
-                            const amount = Number(arr[a].split('=')[1].replace(/\D/g, ''));
-                            const orderIndex = orders.findIndex(f => f.code == code);
-                            if (orderIndex > -1 && amount > 0) {
-                                orders[orderIndex]['amount'] = orders[orderIndex]['amount'] + amount
-                            } else {
-                                orders.push({
-                                    code,
-                                    amount,
-                                    name: ''
-                                })
-                            }
-                        } else {
-                            const orderIndex = orders.findIndex(f => f.code == 'สินค้า');
-                            if (orderIndex > -1) {
-
-                            } else {
-                                orders.push({
-                                    code: `${emoji(0x1000A6)}รหัสสินค้าไม่ถูกต้อง`,
-                                    amount: 'undefined'
-                                })
-                            }
-                        }
-                    }
-                    value = orders;
-                } else if (key == 'name' || key == 'fb') {
-                    if (value.length < 2) {
-                        value = `${emoji(0x1000A6)}undefined`;
-                    }
-                } else if (key == 'banks') {
-                    const str = value;
-                    let arr = str.split(',');
-                    let banks = [];
-                    for (var a in arr) {
-                        if (arr[a].split('=').length == 2) {
-                            const bank1 = arr[a].split('=')[0].toUpperCase();
-                            let price = Number(arr[a].split('=')[1].replace(/\D/g, ''));
-                            let name = '';
-                            let time = '00.00';
-                            let date = moment().format('YYYYMMDD');
-                            if (bank1.match(/[a-zA-Z]+/g, '') == null) {
-                                name = `${emoji(0x1000A6)}ธนาคารundefined`;
-                                // price = 'undefined';
-                            } else {
-                                name = bank1.match(/[a-zA-Z]+/g, '')[0];
-                            }
-                            if (bank1.match(/\d{6}/g) == null && ['COD', 'CM', 'RS'].indexOf(bank1) == -1) {
-                                // name = bank1.match(/[a-zA-Z]+/g, '')[0];
-                                date = `${emoji(0x1000A6)}วันที่โอนundefined`;
-                                // price = 'undefined';
-                            } else {
-                                date = ['COD', 'CM', 'RS'].indexOf(bank1) == -1 ?
-                                    moment(bank1.match(/\d{6}/g)[0], 'DDMMYY').isValid() ?
-                                        moment(bank1.match(/\d{6}/g)[0], 'DDMMYY').format('YYYYMMDD') : `${emoji(0x1000A6)}วันที่โอนundefined`
-                                    : date;
-                            }
-                            if (bank1.match(/\d{2}\.\d{2}/g) == null && ['COD', 'CM', 'RS'].indexOf(bank1) == -1) {
-                                time = `${emoji(0x1000A6)}เวลาโอนundefined`;
-                            } else {
-                                time = ['COD', 'CM', 'RS'].indexOf(bank1) == -1 ? bank1.match(/\d{2}\.\d{2}/g)[0] : time;
-                            }
-                            banks.push({
-                                name,
-                                date,
-                                time,
-                                price
-                            })
-                        } else {
-                            banks.push({
-                                name: arr[a].toUpperCase(),
-                                time: '00.00',
-                                price: `${emoji(0x1000A6)}ยอดเงินundefined`
-                            })
-                        }
-                    }
-                    value = banks
-                }
-                return { [key]: value };
-            }
-        }));
-    data.price = data.banks ? data.banks.map(b => b.price).reduce((le, ri) => Number(le) + Number(ri)) || 0 : 0
-    data.bank = data.banks ? data.banks.map(bank => {
-        let checkBank = true;
-        // if (bank.name.indexOf('COD') > -1) {
-        //     if (['F'].indexOf(data.name.substr(0, 1)) > -1) {
-        //         checkBank = true;
-        //     }
-        // } else {
-        //     if (['F'].indexOf(data.name.substr(0, 1)) > -1) {
-        //         checkBank = true;
-        //     }
-        // }
-        return checkBank && !isNaN(bank.price)
-            ? bank.name + (bank.time == '00.00' ? '' : ' ' + (bank.date.indexOf('undefined') > -1 ? bank.date : moment(bank.date, 'YYYYMMDD').format('DD/MM/YY'))) + (bank.time == '00.00' ? '' : ' ' + bank.time) + '=' + formatMoney(bank.price, 0)
-            : `${emoji(0x1000A6) + bank.name}undefined`
-
-    }).reduce((le, ri) => le + ',' + ri) : emoji(0x1000A6) + 'undefined';
-    const refs = orders.map(order => db.collection('products').doc(order.code));
-    return db.getAll(...refs)
-        .then(snapShot => {
-            let products = [];
-            snapShot.forEach(doc => {
-                if (doc.exists)
-                    products.push({ id: doc.id, ...doc.data() })
-            })
-            for (var order in data.product) {
-                const code = data.product[order]['code'];
-                const amount = data.product[order]['amount'];
-                const product = products.find(f => f.id === data.product[order]['code'])
-                if (product) {
-                    if (product.amount >= amount) {
-                        data.product[order]['name'] = product.name;
-                        data.product[order]['cost'] = product.cost || 0;
-                        data.product[order]['price'] = product.price || 0;
-                    } else {
-                        data.product[order]['code'] = `${emoji(0x1000A6)}undefined` + code;
-                        data.product[order]['name'] = 'เหลือเพียง';
-                        data.product[order]['amount'] = product.amount;
-                    }
-                } else {
-                    data.product[order]['code'] = `${emoji(0x1000A6)}รหัส` + code;
-                    data.product[order]['name'] = 'ไม่มีในรายการสินค้า';
-                    data.product[order]['amount'] = 'undefined';
-                }
-            }
-            let text = formatOrder(data);
-            const indexUndefined = text.indexOf('undefined');
-            let success = true;
-            if (indexUndefined > -1) {
-                // const t = text.substring(0, indexUndefined - 1).split(' ');
-                // text = `${emoji(0x1000A6)} รายการสั่งของคุณไม่ถูกต้องค่ะ\nกรุณาตรวจสอบ ${t[t.length - 1]}`;
-                success = false;
-            }
-            return { text: text.replace(/undefined/g, ''), success, data };
-        })
-}
-const formatOrder = (data) => {
-    //ยอดชำระ: ${data.price ? formatMoney(data.price, 0) + ' บาท' : `${emoji(0x1000A6)}undefined`} 
-    return `
-ชื่อ: ${data.name ? data.name : `${emoji(0x1000A6)}undefined`} 
-เบอร์โทร: ${data.tel ? data.tel : `${emoji(0x1000A6)}undefined`}  
-ที่อยู่: ${data.addr ? data.addr : `${emoji(0x1000A6)}undefined`} 
-สินค้า: ${data.product
-            ? data.product.map((p, i) => '\n' + p.code + ':' + p.name + ' ' + p.amount + (p.amount == 'undefined' ? '' : 'ชิ้น '))
-            : `${emoji(0x1000A6)}undefined`} 
-ธนาคาร: ${data.bank} 
-ยอดชำระ: ${formatMoney(data.price, 0)} 
-FB: ${data.fb ? data.fb : `${emoji(0x1000A6)}undefined`} `;
-}
-const txtListOrders = (orders) => {
-
-    const len = orders.length - 1;
-    return 'ลูกค้า: ' + orders[len].name +
-        '\nเบอร์โทร: ' + orders[len].tel +
-        '\nที่อยู่: ' + orders[len].addr +
-        '\nFB: ' + orders[len].fb +
-        '\nยอดรวม: ' + formatMoney(orders.map(order => order.price).reduce((le, ri) => le + ri), 0) + ' บาท' +
-        `\n===รายการสั่งซื้อ===` + orders.map((order, i) => {
-            return `\n\nครั้งที่ #` + (i + 1) + ' ' + order.id +
-                order.product.map(product => {
-                    return '\n' + product.code + ': ' + product.name + ' ' + product.amount + ' ชิ้น'.replace(/,/g, '')
-                }) + '\nยอดโอน' + order.bank
-                + '\n'.replace(/,/g, '')
-        }) +
-        `\n\n(โปรดอ่านทุกบรรทัด เพื่อผลประโยชน์ตัวท่านเอง)` +
-        `\n1.กรุณาตรวจสอบรายการสั่งซื้อด้วยนะคะ ถ้าไม่ถูกต้องแจ้งแอดมินให้แก้ไขทันที หากจัดส่งแล้วจะไม่สามารถแก้ไขได้ค่ะ` +
-        `\n2.แจ้งเลขพัสดุทางอินบล็อคเท่านั้น Kerry 1-3 วัน (แล้วแต่พื้นที่นั้นๆ) ค่ะ` +
-        `\n3.อย่าลืมส่งรีวิวสวยๆกลับมา..ลุ้นทองทุกเดือน!!` +
-        `\n4.หากลูกค้าเจอสินค้าตำหนิสามารถส่งกลับมาเปลี่ยนทางร้านได้ไม่เกิน 2-4 วัน ในสภาพเดิม ไม่ซัก ไม่แกะป้าย นะคะ!!...หากเกินระยะเวลาที่กำหนดทางร้านจะไม่รับเปลี่ยนทุกกรณีคะ` +
-        `\n5.เลขพัสดุตรวจสอบได้ที่ลิ้งนี้นะคะ https://bot-demo34.herokuapp.com`
-}
 const formatMoney = (amount, decimalCount = 2, decimal = ".", thousands = ",") => {
     try {
         decimalCount = Math.abs(decimalCount);

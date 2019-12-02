@@ -3,9 +3,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import { login, startGetAuth, logout } from './actions/auth';
-import { startListOrders } from './actions/orders';
-import {startGetLive} from './actions/widget/live';
-import { startListPages } from './actions/pages';
 import AppRouter, { history } from './routers/AppRouter';
 import configureStore from './store/configureStore';
 
@@ -22,12 +19,12 @@ const jsx = (
   </Provider>
 );
 
-let hasRendered = false;
+// let hasRendered = false;
 const renderApp = () => {
-  if (!hasRendered) {
-    ReactDOM.render(jsx, document.getElementById('app'));
-    hasRendered = true;
-  }
+  // if (!hasRendered) {
+  ReactDOM.render(jsx, document.getElementById('app'));
+  // hasRendered = true;
+  // }
 };
 
 ReactDOM.render(<LoadingPage />, document.getElementById('app'));
@@ -39,16 +36,13 @@ const logOut = () => {
 }
 
 auth.onAuthStateChanged((user) => {
-  // console.log(user)
+  console.log(user)
   if (user) {
-    store.dispatch(startGetAuth(user)).then((auth) => {
-      // store.dispatch(startListOrders())
-      store.dispatch(startGetLive())
-      store.dispatch(startListPages(store.getState().auth))
-        .then(() => {
-          renderApp()
-        })
-    })
+    //   console.log(user)
+    store.dispatch(startGetAuth(user.providerData[0]))
+    // .then(() => {
+    renderApp();
+    // })
   } else {
     logOut();
   }
