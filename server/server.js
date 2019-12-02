@@ -105,7 +105,7 @@ ${data.payout.map(p => '-' + p.detail + ' ' + p.value)}
 ยอดเดบิตทั้งหมด ${OldDebit} + ${data.debit} = ${debit}
 
 `})
-                            reply(obj, LINE_TH);
+                            reply(obj);
                             // res.send(doc)
                         })
                 })
@@ -114,7 +114,7 @@ ${data.payout.map(p => '-' + p.detail + ' ' + p.value)}
                     type: 'text',
                     text: 'วันที่ไม่ถูกต้อง เช่น วันที่ 1 ธันวาคม 2019 => 191201'
                 })
-                reply(obj, LINE_TH);
+                reply(obj);
             }
         }
     }
