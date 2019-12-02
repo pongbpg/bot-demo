@@ -97,22 +97,22 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                                 obj.messages.push({
                                     type: 'text',
                                     text: `สรุปยอดวันที่ ${moment(date).format('ll')}
-    ยอดขายทั้งหมด ${data.sale}
-    
-    +++เงินสด+++
-    ยอดขาย ${data.cash}
-    นับได้จริง ${data.net}
-    ค่าใช้จ่ายทั้งหมด ${data.payouts}
-    ${data.payout.map(p => '-' + p.detail + ' ' + p.value)}
-    ---------------------
-    ยอดเงินสดทั้งหมด ${OldCash} + ${data.net} = ${cash}
-    
-    +++เดบิต+++
-    ยอดขาย ${data.debit}
-    --------------------
-    ยอดเดบิตทั้งหมด ${OldDebit} + ${data.debit} = ${debit}
-    
-    `})
+ยอดขายทั้งหมด ${formatMoney(data.sale, 0)}
+
++++เงินสด+++
+ยอดขาย ${formatMoney(data.cash,0)}
+นับได้จริง ${formatMoney(data.net,0)}
+ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts,0)} ${data.payout.map(p => '\n-' + p.detail + ' ' + formatMoney(p.value,0))}
+เงิน${data.balance < 0 ? 'หาย' : 'เกิน'} ${formatMoney(data.balance,0)}
+---------------------
+ยอดเงินสดทั้งหมด ${formatMoney(OldCash,0)} + ${formatMoney(data.net,0)} = ${formatMoney(cash,0)}
+
++++เดบิต+++
+ยอดขาย ${formatMoney(data.debit,0)}
+--------------------
+ยอดเดบิตทั้งหมด ${formatMoney(OldDebit,0)} + ${formatMoney(data.debit,0)} = ${formatMoney(debit,0)}
+
+`})
                                 reply(obj);
                             })
                     })
