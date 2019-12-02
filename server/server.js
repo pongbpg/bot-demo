@@ -102,7 +102,7 @@ app.post('/api/linebot', jsonParser, (req, res) => {
 +++เงินสด+++
 ยอดขาย ${formatMoney(data.cash, 0)}
 นับได้จริง ${formatMoney(data.net, 0)}
-ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts, 0)} ${data.payout.length > 0 ? data.payout.map(p => '\n-' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
+ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts, 0)} ${data.payout ? data.payout.map(p => '\n-' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
 เงิน${data.balance < 0 ? 'หาย' : 'เกิน'} ${formatMoney(data.balance, 0)}
 ---------------------
 ยอดเงินสดทั้งหมด ${formatMoney(OldCash, 0)} + ${formatMoney(data.net, 0)} = ${formatMoney(cash, 0)}
