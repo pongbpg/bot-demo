@@ -44,7 +44,7 @@ app.post('/api/linebot', jsonParser, (req, res) => {
 
     if (msg.indexOf('#shop') > -1) {
         const msgs = msg.split('#');
-        let data = {};
+        let data = { sale: 0, cash: 0, payouts: 0, balance: 0, net: 0 };
         msgs.map(msg => {
             if (msg.split(':').length == 2) {
                 const key = msg.split(':')[0];
@@ -56,7 +56,7 @@ app.post('/api/linebot', jsonParser, (req, res) => {
         })
         if (data.shop) {
             const date = '20' + data.shop.substr(0, 2) + '-' + data.shop.substr(2, 2) + '-' + data.shop.substr(4, 2)
-            data.payouts = 0;
+            // data.payouts = 0;
             if (data.payout) {
                 data.payout = data.payout.split(',')
                     .map(pay => {
@@ -92,7 +92,7 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                                 cash = OldCash + data.net;
                                 debit = OldDebit + data.debit;
 
-                                db.collection('shops').doc(date).set({ ...data, date })
+                                db.collection('shops').doc(date).set({ ...data, date, curCash: cash, curDebit: debit })
                                 walRef.set({ cash, debit })
                                 obj.messages.push({
                                     type: 'text',
