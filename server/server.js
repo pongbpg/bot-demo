@@ -10,7 +10,7 @@ const moment = require('moment');
 moment.locale('th');
 // const serviceAccount = require('./key.json');
 admin.initializeApp({
-    // credential: admin.credential.cert(serviceAccount)
+    // credential: admin.credential.cert(require('./key.json'))
     credential: admin.credential.cert({
         "type": "service_account",
         "project_id": "demodb-26ade",
@@ -32,10 +32,12 @@ const LINE_HEADER = {
     'Authorization': `Bearer hlF5sNoo0lO2bbTMn7uwbhXNz5KoNx7iUqVIDvUSFs5orA86LQCJ7OpLPJLV5Gt/xWryxeiVk5WAuqvwdwnYSVox4U59vs2wmhNKOnHxXrlLZhPTadvni08Mp3E8hMoZxh8HN8SwX190m2nPOkjUwQdB04t89/1O/w1cDnyilFU=`
 };
 var jsonParser = bodyParser.json();
+
+const walRef = db.collection('aggregation').doc('wallet')
 app.post('/api/linebot', jsonParser, (req, res) => {
-    const request = req.body.events[0];
-    const msg = request.message.text;
-    const userId = request.source.userId;
+    // const request = req.body.events[0];
+    const msg = req.body.message.text;
+    // const userId = request.source.userId;
 
     let obj = {
         replyToken: request.replyToken,
@@ -43,42 +45,21 @@ app.post('/api/linebot', jsonParser, (req, res) => {
     };
 
     if (msg.indexOf('#shop') > -1) {
-        const msgs = msg.split('#');
-        let data = { sale: 0, cash: 0, payouts: 0, balance: 0, net: 0, debit: 0 };
-        msgs.map(msg => {
-            if (msg.split(':').length == 2) {
-                const key = msg.split(':')[0];
-                const value = key != 'shop' && key != 'payout'
-                    ? Number(msg.split(':')[1])
-                    : msg.split(':')[1];
-                data[key] = value;
-            }
-        })
+        let data = MapProps({ sale: 0, cash: 0, payouts: 0, balance: 0, net: 0, debit: 0 }, msg, ['shop', 'payout'])
+
         if (data.shop) {
             const date = '20' + data.shop.substr(0, 2) + '-' + data.shop.substr(2, 2) + '-' + data.shop.substr(4, 2)
             // data.payouts = 0;
             if (data.payout) {
-                data.payout = data.payout.split(',')
-                    .map(pay => {
-                        if (pay.split('=').length == 2) {
-                            const value = pay.split('=')[1];
-                            if (!isNaN(value)) {
-                                data.payouts += Number(value)
-                                return {
-                                    detail: pay.split('=')[0],
-                                    value: Number(value)
-                                }
-                            }
-                        }
-                    }) || [];
+                data.payout = MapDetails(data.payout);
+                data.payouts = data.payout.reduce((a, b) => a + b.value, 0)
             }
             data.balance = ((data.net || 0) + data.payouts) - (data.cash || 0);
-            // console.log(data.sale, data.net, data.payouts)
+
             if (moment(date).isValid()) {
                 db.collection('shops').doc(date)
                     .get()
                     .then(docShop => {
-                        const walRef = db.collection('aggregation').doc('wallet')
                         walRef.get()
                             .then(docWal => {
                                 let OldCash = docWal.data().cash;
@@ -97,22 +78,98 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                                 obj.messages.push({
                                     type: 'text',
                                     text: `สรุปยอดวันที่ ${moment(date).format('ll')}
-ยอดขายทั้งหมด ${formatMoney(data.sale, 0)}
+                ยอดขายทั้งหมด ${formatMoney(data.sale, 0)}
 
-+++เงินสด+++
-ยอดขาย ${formatMoney(data.cash, 0)}
-นับได้จริง ${formatMoney(data.net, 0)}
-ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts, 0)} ${data.payout ? data.payout.map(p => '\n-' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
-เงิน${data.balance < 0 ? 'หาย' : 'เกิน'} ${formatMoney(data.balance, 0)}
----------------------
-ยอดเงินสดทั้งหมด ${formatMoney(OldCash, 0)} + ${formatMoney(data.net, 0)} = ${formatMoney(cash, 0)}
+                +++เงินสด+++
+                ยอดขาย ${formatMoney(data.cash, 0)}
+                นับได้จริง ${formatMoney(data.net, 0)}
+                ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts, 0)} ${data.payout ? data.payout.map(p => '\n-' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
+                เงิน${data.balance < 0 ? 'หาย' : 'เกิน'} ${formatMoney(data.balance, 0)}
+                ---------------------
+                ยอดเงินสดทั้งหมด ${formatMoney(OldCash, 0)} + ${formatMoney(data.net, 0)} = ${formatMoney(cash, 0)}
 
-+++เดบิต+++
-ยอดขาย ${formatMoney(data.debit, 0)}
---------------------
-ยอดเดบิตทั้งหมด ${formatMoney(OldDebit, 0)} + ${formatMoney(data.debit, 0)} = ${formatMoney(debit, 0)}
+                +++เดบิต+++
+                ยอดขาย ${formatMoney(data.debit, 0)}
+                --------------------
+                ยอดเดบิตทั้งหมด ${formatMoney(OldDebit, 0)} + ${formatMoney(data.debit, 0)} = ${formatMoney(debit, 0)}
 
-`})
+                `})
+                                reply(obj);
+                            })
+                    })
+            } else {
+                obj.messages.push({
+                    type: 'text',
+                    text: 'วันที่ไม่ถูกต้อง เช่น วันที่ 1 ธันวาคม 2019 => 191201'
+                })
+                reply(obj);
+            }
+        }
+    } else if (msg.indexOf('#trans') > -1) {
+        let data = MapProps({ payouts: 0 }, msg, ['trans', 'payout'])
+        if (data.trans) {
+            const date = '20' + data.trans.substr(0, 2) + '-' + data.trans.substr(2, 2) + '-' + data.trans.substr(4, 2);
+            if (data.payout) {
+                data.payout = MapDetails(data.payout);
+                data.payouts = data.payout.reduce((a, b) => a + b.value, 0)
+            }
+
+            if (moment(date).isValid()) {
+                db.collection('trans').doc(date)
+                    .get().then(docTran => {
+                        walRef.get()
+                            .then(docWal => {
+                                let OldWalDebit = docWal.data().debit;
+                                if (docTran.exists) {
+                                    const oldTranData = { ...docTran.data() };
+                                    if (data.no && data.payout) { //edited
+                                        data.payout = oldTranData.payout.map((m, i) => {
+                                            if (i == (data.no - 1)) {
+                                                OldWalDebit += m.value
+                                                OldWalDebit -= data.payout[0].value
+                                                return {
+                                                    ...data.payout[0]
+                                                }
+                                            } else {
+                                                return m
+                                            }
+                                        })
+                                        data.payouts = data.payout.reduce((a, b) => a + b.value, 0)
+                                    } else if (data.no && !data.payout) { //removed
+                                        const removed = oldTranData.payout.splice(data.no - 1, 1)[0];
+                                        OldWalDebit += removed.value;
+                                        data.payout = oldTranData.payout;
+                                        data.payouts = data.payout.reduce((a, b) => a + b.value, 0)
+                                        // console.log('removed', data)
+                                    } else if (!data.no && data.payout) { //inserted
+                                        data.payout = oldTranData.payout.concat(data.payout)
+                                        OldWalDebit -= data.payouts;
+                                        data.payouts += oldTranData.payouts;
+                                        // console.log('insert', data)
+                                    }
+                                } else { //create
+                                    if (data.payout) {
+                                        OldWalDebit -= data.payouts;
+                                    } else {
+
+                                    }
+                                }
+
+                                if (data.no) delete data.no;
+                                docTran.ref.set({ ...data, curDebit: OldWalDebit })
+                                docWal.ref.update({ debit: OldWalDebit })
+
+                                obj.messages.push({
+                                    type: 'text',
+                                    text: `รายการโอนค่าใช้จ่ายวันที่ ${moment(date).format('ll')}
+
+                                    ${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
+                                    
+                                    รวม ${data.payouts} บาท
+                                    -----------------------
+                                    ยอดเดบิตคงเหลือ ${data.payouts + OldWalDebit} - ${data.payouts} = ${OldWalDebit}
+
+                `})
                                 reply(obj);
                             })
                     })
@@ -126,6 +183,34 @@ app.post('/api/linebot', jsonParser, (req, res) => {
         }
     }
 })
+const MapProps = (model, msg, notNumber = [], sign = '#') => {
+    let data = model;
+    const msgs = msg.split(sign);
+    msgs.map(m => {
+        if (m.split(':').length == 2) {
+            const key = m.split(':')[0];
+            const value = notNumber.indexOf(key) == -1
+                ? Number(m.split(':')[1])
+                : m.split(':')[1];
+            data[key] = value;
+        }
+    })
+    return data;
+}
+const MapDetails = (data) => {
+    return data.split(',').map(d => {
+        if (d.split('=').length == 2) {
+            const value = d.split('=')[1];
+            if (!isNaN(value)) {
+                return {
+                    detail: d.split('=')[0],
+                    value: Number(value)
+                }
+            }
+        }
+        return {}
+    }).filter(f => Object.keys(f).length > 0) || []
+}
 
 app.use(express.static(publicPath));
 app.get('*', (req, res) => {
