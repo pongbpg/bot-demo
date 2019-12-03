@@ -163,13 +163,13 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                                     type: 'text',
                                     text: `รายการโอนค่าใช้จ่ายวันที่ ${moment(date).format('ll')}
 
-                                    ${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
-                                    
-                                    รวม ${formatMoney(data.payouts, 0)} บาท
-                                    -----------------------
-                                    ยอดเดบิตคงเหลือ ${formatMoney(data.payouts + OldWalDebit, 0)} - ${formatMoney(data.payouts, 0)} = ${formatMoney(OldWalDebit, 0)}
+${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
 
-                `})
+รวม ${formatMoney(data.payouts, 0)} บาท
+-----------------------
+ยอดเดบิตคงเหลือ ${formatMoney(data.payouts + OldWalDebit, 0)} - ${formatMoney(data.payouts, 0)} = ${formatMoney(OldWalDebit, 0)}
+
+`})
                                 reply(obj);
                             })
                     })
