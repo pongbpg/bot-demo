@@ -35,9 +35,9 @@ var jsonParser = bodyParser.json();
 
 const walRef = db.collection('aggregation').doc('wallet')
 app.post('/api/linebot', jsonParser, (req, res) => {
-    // const request = req.body.events[0];
-    const msg = req.body.message.text;
-    // const userId = request.source.userId;
+    const request = req.body.events[0];
+    const msg = request.message.text;
+    const userId = request.source.userId;
 
     let obj = {
         replyToken: request.replyToken,
