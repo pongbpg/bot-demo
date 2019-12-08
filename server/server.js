@@ -180,16 +180,25 @@ ${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' '
                     date: convertDate(m)
                 }
             }).filter(f => f.valid);
-            let query
             if (dates.length == 1) {
-                query = db.collection('shop').doc(dates[0].date)
+                const date = dates[0].date;
+                db.collection('shops').doc(date)
                     .get().then(doc => {
-
+                        obj.messages.push({
+                            type: 'text',
+                            text: textShop(moment(date).format('ll'), { ...doc.data() })
+                        })
+                        reply(obj);
+                        // res.send(textShop(moment(date).format('ll'), { ...doc.data() }))
                     })
             } else if (dates.length == 2) {
-
+                obj.messages.push({
+                    type: 'text',
+                    text: 'ฟังชั่นนี้ยังไม่เสร็จจ้า'
+                })
+                reply(obj);
             }
-            res.json(dates)
+            // res.json(dates)
         }
     }
 })
