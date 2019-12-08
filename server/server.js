@@ -37,7 +37,7 @@ const walRef = db.collection('aggregation').doc('wallet')
 app.post('/api/linebot', jsonParser, (req, res) => {
     const request = req.body.events[0];
     const msg = request.message.text;
-    const userId = request.source.userId;
+    // const userId = request.source.userId;
 
     let obj = {
         replyToken: request.replyToken,
@@ -48,7 +48,7 @@ app.post('/api/linebot', jsonParser, (req, res) => {
         let data = MapProps({ sale: 0, cash: 0, payouts: 0, balance: 0, net: 0, debit: 0 }, msg, ['shop', 'payout'])
 
         if (data.shop) {
-            const date = '20' + data.shop.substr(0, 2) + '-' + data.shop.substr(2, 2) + '-' + data.shop.substr(4, 2)
+            const date = convertDate(data.shop)
             // data.payouts = 0;
             if (data.payout) {
                 data.payout = MapDetails(data.payout);
@@ -62,38 +62,26 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                     .then(docShop => {
                         walRef.get()
                             .then(docWal => {
-                                let OldCash = docWal.data().cash;
+                                let befCash = docWal.data().cash;
                                 let cash = 0;
-                                let OldDebit = docWal.data().debit;
+                                let befDebit = docWal.data().debit;
                                 let debit = 0;
                                 if (docShop.exists) {
-                                    OldCash -= docShop.data().net;
-                                    OldDebit -= docShop.data().debit;
+                                    befCash -= docShop.data().net;
+                                    befDebit -= docShop.data().debit;
                                 }
-                                cash = OldCash + data.net;
-                                debit = OldDebit + data.debit;
-
-                                db.collection('shops').doc(date).set({ ...data, date, curCash: cash, curDebit: debit })
+                                cash = befCash + data.net;
+                                debit = befDebit + data.debit;
+                                data.curCash = cash;
+                                data.curDebit = debit;
+                                data.befCash = befCash;
+                                data.befDebit = befDebit;
+                                db.collection('shops').doc(date).set({ ...data, date })
                                 walRef.set({ cash, debit })
                                 obj.messages.push({
                                     type: 'text',
-                                    text: `สรุปยอดวันที่ ${moment(date).format('ll')}
-ยอดขายทั้งหมด ${formatMoney(data.sale, 0)}
-
-+++เงินสด+++
-ยอดขาย ${formatMoney(data.cash, 0)}
-นับได้จริง ${formatMoney(data.net, 0)}
-ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts, 0)} ${data.payout ? data.payout.map(p => '\n-' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
-เงิน${data.balance < 0 ? 'หาย' : 'เกิน'} ${formatMoney(data.balance, 0)}
----------------------
-ยอดเงินสดทั้งหมด ${formatMoney(OldCash, 0)} + ${formatMoney(data.net, 0)} = ${formatMoney(cash, 0)}
-
-+++เดบิต+++
-ยอดขาย ${formatMoney(data.debit, 0)}
---------------------
-ยอดเดบิตทั้งหมด ${formatMoney(OldDebit, 0)} + ${formatMoney(data.debit, 0)} = ${formatMoney(debit, 0)}
-
-`})
+                                    text: textShop(date, data)
+                                })
                                 reply(obj);
                             })
                     })
@@ -108,7 +96,7 @@ app.post('/api/linebot', jsonParser, (req, res) => {
     } else if (msg.indexOf('#trans') > -1) {
         let data = MapProps({ payouts: 0 }, msg, ['trans', 'payout'])
         if (data.trans) {
-            const date = '20' + data.trans.substr(0, 2) + '-' + data.trans.substr(2, 2) + '-' + data.trans.substr(4, 2);
+            const date = convertDate(data.trans);
             if (data.payout) {
                 data.payout = MapDetails(data.payout);
                 data.payouts = data.payout.reduce((a, b) => a + b.value, 0)
@@ -156,7 +144,9 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                                 }
 
                                 if (data.no) delete data.no;
-                                docTran.ref.set({ ...data, curDebit: OldWalDebit })
+                                data.curDebit = OldWalDebit;
+                                data.befDebit = OldWalDebit + data.payouts;
+                                docTran.ref.set({ ...data })
                                 docWal.ref.update({ debit: OldWalDebit })
 
                                 obj.messages.push({
@@ -167,7 +157,7 @@ ${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' '
 
 รวม ${formatMoney(data.payouts, 0)} บาท
 -----------------------
-ยอดเดบิตคงเหลือ ${formatMoney(data.payouts + OldWalDebit, 0)} - ${formatMoney(data.payouts, 0)} = ${formatMoney(OldWalDebit, 0)}
+ยอดเดบิตคงเหลือ ${formatMoney(data.befDebit, 0)} - ${formatMoney(data.payouts, 0)} = ${formatMoney(data.curDebit, 0)}
 
 `})
                                 reply(obj);
@@ -180,6 +170,26 @@ ${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' '
                 })
                 reply(obj);
             }
+        }
+    } else if (msg.indexOf('@shop') > -1) {
+        const msgs = msg.split(':');
+        if (msgs.length == 2) {
+            const dates = msgs[1].split('-').map(m => {
+                return {
+                    valid: moment(convertDate(m)).isValid(),
+                    date: convertDate(m)
+                }
+            }).filter(f => f.valid);
+            let query
+            if (dates.length == 1) {
+                query = db.collection('shop').doc(dates[0].date)
+                    .get().then(doc => {
+
+                    })
+            } else if (dates.length == 2) {
+
+            }
+            res.json(dates)
         }
     }
 })
@@ -210,6 +220,28 @@ const MapDetails = (data) => {
         }
         return {}
     }).filter(f => Object.keys(f).length > 0) || []
+}
+
+const convertDate = (date) => {
+    return '20' + date.substr(0, 2) + '-' + date.substr(2, 2) + '-' + date.substr(4, 2)
+}
+const textShop = (date, data) => {
+    return `สรุปยอดวันที่ ${date}
+ยอดขายทั้งหมด ${formatMoney(data.sale, 0)}
+
++++เงินสด+++
+ยอดขาย ${formatMoney(data.cash, 0)}
+นับได้จริง ${formatMoney(data.net, 0)}
+ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts, 0)} ${data.payout ? data.payout.map(p => '\n-' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
+เงิน${data.balance < 0 ? 'หาย' : 'เกิน'} ${formatMoney(data.balance, 0)}
+---------------------
+ยอดเงินสดทั้งหมด ${formatMoney(data.befCash, 0)} + ${formatMoney(data.net, 0)} = ${formatMoney(data.curCash, 0)}
+
++++เดบิต+++
+ยอดขาย ${formatMoney(data.debit, 0)}
+--------------------
+ยอดเดบิตทั้งหมด ${formatMoney(data.befDebit, 0)} + ${formatMoney(data.debit, 0)} = ${formatMoney(data.curDebit, 0)}
+`
 }
 
 app.use(express.static(publicPath));
