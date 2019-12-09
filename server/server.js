@@ -211,9 +211,10 @@ ${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' '
                         const date = moment(date1).format('l') + '-' + moment(date2).format('l');
                         obj.messages.push({
                             type: 'text',
-                            text: textShop(textShop(date, data, false))
+                            text: textShop(date, data, false)
                         })
                         reply(obj);
+                        // res.json(obj)
                         // res.send(textShop(date, data, false))
                     })
             }
