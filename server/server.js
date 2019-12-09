@@ -80,7 +80,7 @@ app.post('/api/linebot', jsonParser, (req, res) => {
                                 walRef.set({ cash, debit })
                                 obj.messages.push({
                                     type: 'text',
-                                    text: textShop(date, data)
+                                    text: textShop(date, data, true)
                                 })
                                 reply(obj);
                             })
@@ -179,24 +179,43 @@ ${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' '
                     valid: moment(convertDate(m)).isValid(),
                     date: convertDate(m)
                 }
-            }).filter(f => f.valid);
+            }).filter(f => f.valid).sort((a, b) => a.date > b.date);
             if (dates.length == 1) {
                 const date = dates[0].date;
                 db.collection('shops').doc(date)
                     .get().then(doc => {
                         obj.messages.push({
                             type: 'text',
-                            text: textShop(moment(date).format('ll'), { ...doc.data() })
+                            text: textShop(moment(date).format('ll'), { ...doc.data() }, true)
                         })
                         reply(obj);
-                        // res.send(textShop(moment(date).format('ll'), { ...doc.data() }))
+                        // res.send(textShop(moment(date).format('ll'), { ...doc.data() }, true))
                     })
             } else if (dates.length == 2) {
-                obj.messages.push({
-                    type: 'text',
-                    text: 'ฟังชั่นนี้ยังไม่เสร็จจ้า'
-                })
-                reply(obj);
+                const date1 = dates[0].date;
+                const date2 = dates[1].date;
+                db.collection('shops')
+                    .where('date', '>=', date1)
+                    .where('date', '<=', date2)
+                    .get()
+                    .then(snapShot => {
+                        let data = { debit: 0, cash: 0, sale: 0, payouts: 0, net: 0 };
+                        snapShot.forEach(doc => {
+                            data.debit += doc.data().debit;
+                            data.cash += doc.data().cash;
+                            data.sale += doc.data().sale;
+                            data.payouts += doc.data().payouts;
+                            data.net += doc.data().net;
+                        })
+                        data.balance = data.net + data.payouts - data.cash
+                        const date = moment(date1).format('l') + '-' + moment(date2).format('l');
+                        obj.messages.push({
+                            type: 'text',
+                            text: textShop(textShop(date, data, false))
+                        })
+                        reply(obj);
+                        // res.send(textShop(date, data, false))
+                    })
             }
             // res.json(dates)
         }
@@ -234,22 +253,22 @@ const MapDetails = (data) => {
 const convertDate = (date) => {
     return '20' + date.substr(0, 2) + '-' + date.substr(2, 2) + '-' + date.substr(4, 2)
 }
-const textShop = (date, data) => {
+const textShop = (date, data, sum = true) => {
     return `สรุปยอดวันที่ ${date}
 ยอดขายทั้งหมด ${formatMoney(data.sale, 0)}
 
 +++เงินสด+++
 ยอดขาย ${formatMoney(data.cash, 0)}
 นับได้จริง ${formatMoney(data.net, 0)}
-ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts, 0)} ${data.payout ? data.payout.map(p => '\n-' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
+ค่าใช้จ่ายทั้งหมด ${formatMoney(data.payouts, 0)} ${data.payout ? data.payout.map(p => '\n\t-' + p.detail + ' ' + formatMoney(p.value, 0)) : ''}
 เงิน${data.balance < 0 ? 'หาย' : 'เกิน'} ${formatMoney(data.balance, 0)}
 ---------------------
-ยอดเงินสดทั้งหมด ${formatMoney(data.befCash, 0)} + ${formatMoney(data.net, 0)} = ${formatMoney(data.curCash, 0)}
+${sum ? `ยอดเงินสดทั้งหมด ${formatMoney(data.befCash, 0)} + ${formatMoney(data.net, 0)} = ${formatMoney(data.curCash, 0)}` : ''}
 
 +++เดบิต+++
 ยอดขาย ${formatMoney(data.debit, 0)}
 --------------------
-ยอดเดบิตทั้งหมด ${formatMoney(data.befDebit, 0)} + ${formatMoney(data.debit, 0)} = ${formatMoney(data.curDebit, 0)}
+${sum ? `ยอดเดบิตทั้งหมด ${formatMoney(data.befDebit, 0)} + ${formatMoney(data.debit, 0)} = ${formatMoney(data.curDebit, 0)}` : ''}
 `
 }
 
