@@ -220,6 +220,19 @@ ${data.payout ? data.payout.map((p, i) => '\n' + (i + 1) + '. ' + p.detail + ' '
             }
             // res.json(dates)
         }
+    } else if (msg.indexOf('@wallet') > -1) {
+        db.collection('aggregation').doc('wallet')
+            .get().then(doc => {
+                const text = `ยอดกระเป๋าคงเหลือ ${formatMoney(doc.data().cash + doc.data().debit, 0)}
+-เงินสด ${formatMoney(doc.data().cash, 0)}
+-เดบิต ${formatMoney(doc.data().debit, 0)}`
+                obj.messages.push({
+                    type: 'text',
+                    text
+                })
+                reply(obj);
+                // res.send(text)
+            })
     }
 })
 const MapProps = (model, msg, notNumber = [], sign = '#') => {
